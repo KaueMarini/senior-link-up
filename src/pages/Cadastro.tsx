@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Heart, Eye, EyeOff } from "lucide-react";
+import { Plane, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,9 +31,9 @@ const Cadastro = () => {
         {/* Logo */}
         <div className="text-center">
           <Link to="/" className="inline-flex items-center gap-2">
-            <Heart className="h-8 w-8 text-primary" fill="hsl(var(--primary))" />
+            <Plane className="h-8 w-8 text-primary" />
             <span className="font-heading text-2xl font-bold text-foreground">
-              CuidarBem
+              Fly Care
             </span>
           </Link>
           <h1 className="mt-6 font-heading text-3xl font-bold text-foreground">
