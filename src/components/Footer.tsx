@@ -5,7 +5,7 @@ const Footer = () => {
     <footer className="border-t bg-card py-8">
       <div className="container flex flex-col items-center justify-between gap-4 sm:flex-row">
         <div className="flex items-center gap-2">
-          <img src={logo} alt="Fly Care" className="h-11 w-11" />
+          <img src={logo} alt="Fly Care" className="h-14 w-14" />
           <span className="font-heading font-semibold text-foreground">Fly Care</span>
         </div>
         <p className="text-sm text-muted-foreground">
