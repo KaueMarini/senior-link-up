@@ -1,29 +1,41 @@
-import { Shield, Users, Bell, Calendar } from "lucide-react";
+import { MessageCircle, CalendarCheck, Brain, ShieldCheck, FileText, Users } from "lucide-react";
 
 const features = [
   {
-    icon: Shield,
-    title: "Segurança e Confiança",
+    icon: MessageCircle,
+    title: "Tudo via WhatsApp",
     description:
-      "Acompanhe em tempo real a rotina e o bem-estar de quem você ama com total tranquilidade.",
+      "O responsável agenda consultas, envia áudios e cria lembretes direto pelo WhatsApp. O idoso e o cuidador são notificados automaticamente.",
+  },
+  {
+    icon: CalendarCheck,
+    title: "Agenda Inteligente",
+    description:
+      "Marque exames, médicos e remédios. O sistema notifica o idoso e o cuidador com antecedência e no horário exato.",
+  },
+  {
+    icon: Brain,
+    title: "IA Companheira",
+    description:
+      "O idoso conversa com uma IA amigável para tirar dúvidas, relembrar o que fez ontem ou simplesmente ter companhia.",
+  },
+  {
+    icon: FileText,
+    title: "Laudos e Exames",
+    description:
+      "Anexe relatórios, laudos e exames pelo sistema ou por WhatsApp. Tudo organizado e acessível em um só lugar.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Cuidadores Verificados",
+    description:
+      "Encontre cuidadores com verificação rigorosa de CPF e RG. Segurança para quem você mais ama.",
   },
   {
     icon: Users,
-    title: "Conexão Familiar",
+    title: "Controle Total",
     description:
-      "Mantenha toda a família informada e conectada, mesmo à distância.",
-  },
-  {
-    icon: Bell,
-    title: "Alertas Inteligentes",
-    description:
-      "Receba notificações sobre medicações, consultas e atividades importantes.",
-  },
-  {
-    icon: Calendar,
-    title: "Rotina Organizada",
-    description:
-      "Gerencie horários, compromissos e cuidados diários de forma simples e visual.",
+      "O responsável gerencia telefones, notificações e toda a rotina do idoso — de qualquer lugar, a qualquer hora.",
   },
 ];
 
@@ -33,13 +45,14 @@ const FeaturesSection = () => {
       <div className="container">
         <div className="mb-14 text-center">
           <h2 className="font-heading text-3xl font-bold text-foreground md:text-4xl">
-            Tudo que você precisa em um só lugar
+            Tudo que seu idoso precisa, na palma da mão
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-            Funcionalidades pensadas para facilitar o dia a dia de quem cuida e de quem é cuidado.
+            Do lembrete de remédio à companhia por IA — um ecossistema completo
+            para responsáveis, cuidadores e idosos.
           </p>
         </div>
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((feature, i) => (
             <div
               key={feature.title}
