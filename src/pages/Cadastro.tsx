@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Plane, Eye, EyeOff } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Plane, Eye, EyeOff, Check, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,18 +11,60 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
+
+const passwordRules = [
+  { label: "Pelo menos 8 caracteres", test: (s: string) => s.length >= 8 },
+  { label: "Uma letra maiúscula", test: (s: string) => /[A-Z]/.test(s) },
+  { label: "Um caractere especial (!@#$...)", test: (s: string) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(s) },
+];
 
 const Cadastro = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [confirmarSenha, setConfirmarSenha] = useState("");
   const [perfil, setPerfil] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const allRulesPass = passwordRules.every((r) => r.test(senha));
+  const passwordsMatch = senha === confirmarSenha && confirmarSenha.length > 0;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Auth será implementado pelo usuário via Supabase
-    console.log({ nome, email, senha, perfil });
+
+    if (!allRulesPass) {
+      toast({ title: "Senha fraca", description: "Sua senha não atende todos os requisitos.", variant: "destructive" });
+      return;
+    }
+    if (!passwordsMatch) {
+      toast({ title: "Senhas diferentes", description: "As senhas não coincidem.", variant: "destructive" });
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await supabase.auth.signUp({
+      email,
+      password: senha,
+      options: {
+        data: { nome, perfil },
+        emailRedirectTo: window.location.origin,
+      },
+    });
+    setLoading(false);
+
+    if (error) {
+      toast({ title: "Erro ao criar conta", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    toast({ title: "Conta criada!", description: "Verifique seu e-mail para confirmar o cadastro." });
+    navigate("/");
   };
 
   return (
@@ -78,11 +120,10 @@ const Cadastro = () => {
               <Input
                 id="senha"
                 type={showPassword ? "text" : "password"}
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Crie uma senha forte"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 required
-                minLength={6}
                 className="h-12 pr-12 text-base"
               />
               <button
@@ -94,6 +135,50 @@ const Cadastro = () => {
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
+
+            {/* Password strength indicators */}
+            {senha.length > 0 && (
+              <ul className="mt-2 space-y-1">
+                {passwordRules.map((rule) => {
+                  const passes = rule.test(senha);
+                  return (
+                    <li key={rule.label} className={`flex items-center gap-2 text-sm transition-colors ${passes ? "text-green-600" : "text-muted-foreground"}`}>
+                      {passes ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                      {rule.label}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="confirmar-senha" className="text-base">Confirmar senha</Label>
+            <div className="relative">
+              <Input
+                id="confirmar-senha"
+                type={showConfirm ? "text" : "password"}
+                placeholder="Repita a senha"
+                value={confirmarSenha}
+                onChange={(e) => setConfirmarSenha(e.target.value)}
+                required
+                className="h-12 pr-12 text-base"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirm(!showConfirm)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label={showConfirm ? "Ocultar senha" : "Mostrar senha"}
+              >
+                {showConfirm ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
+            {confirmarSenha.length > 0 && (
+              <p className={`flex items-center gap-2 text-sm ${passwordsMatch ? "text-green-600" : "text-destructive"}`}>
+                {passwordsMatch ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                {passwordsMatch ? "Senhas coincidem" : "Senhas não coincidem"}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -110,8 +195,8 @@ const Cadastro = () => {
             </Select>
           </div>
 
-          <Button type="submit" className="h-12 w-full text-base font-semibold">
-            Criar conta
+          <Button type="submit" className="h-12 w-full text-base font-semibold" disabled={loading}>
+            {loading ? <><Loader2 className="h-5 w-5 animate-spin" /> Criando conta...</> : "Criar conta"}
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">
