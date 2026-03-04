@@ -28,9 +28,12 @@ const Login = () => {
     setLoading(false);
 
     if (error) {
+      const isEmailNotConfirmed = error.message.toLowerCase().includes("email not confirmed");
       toast({
-        title: "Erro ao entrar",
-        description: error.message,
+        title: isEmailNotConfirmed ? "E-mail não confirmado" : "Erro ao entrar",
+        description: isEmailNotConfirmed
+          ? "Você precisa confirmar seu e-mail antes de fazer login. Verifique sua caixa de entrada e a pasta de spam."
+          : error.message,
         variant: "destructive",
       });
       return;

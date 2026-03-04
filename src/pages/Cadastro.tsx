@@ -63,7 +63,7 @@ const Cadastro = () => {
       return;
     }
 
-    toast({ title: "Conta criada!", description: "Verifique seu e-mail para confirmar o cadastro." });
+    toast({ title: "Conta criada! 🎉", description: "Enviamos um e-mail de confirmação para você. Verifique sua caixa de entrada e também a pasta de spam." });
     navigate("/");
   };
 
