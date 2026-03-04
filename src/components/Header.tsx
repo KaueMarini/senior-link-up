@@ -12,7 +12,10 @@ const Header = () => {
             Fly Care
           </span>
         </Link>
-        <nav className="flex items-center gap-4">
+        <nav className="flex items-center gap-3">
+          <Link to="/login">
+            <Button variant="outline">Entrar</Button>
+          </Link>
           <Link to="/cadastro">
             <Button>Começar agora</Button>
           </Link>
