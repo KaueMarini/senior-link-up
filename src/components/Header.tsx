@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LogOut, UserCircle } from "lucide-react";
 import logo from "@/assets/logo.png";
@@ -6,6 +6,12 @@ import { useAuth } from "@/hooks/useAuth";
 
 const Header = () => {
   const { user, loading, signOut, userName } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-md">
@@ -24,7 +30,7 @@ const Header = () => {
                 <UserCircle className="h-5 w-5 text-primary" />
                 <span className="font-medium">Olá, {userName}!</span>
               </div>
-              <Button variant="outline" size="sm" onClick={signOut}>
+              <Button variant="outline" size="sm" onClick={handleSignOut}>
                 <LogOut className="h-4 w-4" />
                 Sair
               </Button>

@@ -8,7 +8,7 @@ import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Heart, Search, Stethoscope } from "lucide-react";
+import { Heart, Search, Stethoscope, LayoutDashboard } from "lucide-react";
 
 const WelcomeSection = ({ userName, userPerfil }: { userName: string; userPerfil: string }) => {
   const isFamiliar = userPerfil === "familiar";
@@ -26,10 +26,10 @@ const WelcomeSection = ({ userName, userPerfil }: { userName: string; userPerfil
 
         <div className="mt-4 flex flex-wrap gap-3">
           {isFamiliar && (
-            <Link to="/cuidadores">
+            <Link to="/dashboard/responsavel">
               <Button size="lg" className="gap-2">
-                <Search className="h-5 w-5" />
-                Encontrar cuidadores
+                <LayoutDashboard className="h-5 w-5" />
+                Meu Painel
               </Button>
             </Link>
           )}
