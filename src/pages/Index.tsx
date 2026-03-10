@@ -8,10 +8,11 @@ import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Heart, Search } from "lucide-react";
+import { Heart, Search, Stethoscope } from "lucide-react";
 
 const WelcomeSection = ({ userName, userPerfil }: { userName: string; userPerfil: string }) => {
   const isFamiliar = userPerfil === "familiar";
+  const isCuidador = userPerfil === "cuidador";
 
   return (
     <section className="bg-primary/5 border-b">
@@ -23,14 +24,24 @@ const WelcomeSection = ({ userName, userPerfil }: { userName: string; userPerfil
           É bom ter você de volta. O que gostaria de fazer hoje?
         </p>
 
-        {isFamiliar && (
-          <Link to="/cuidadores" className="mt-4 inline-block">
-            <Button size="lg" className="gap-2">
-              <Search className="h-5 w-5" />
-              Encontrar cuidadores
-            </Button>
-          </Link>
-        )}
+        <div className="mt-4 flex flex-wrap gap-3">
+          {isFamiliar && (
+            <Link to="/cuidadores">
+              <Button size="lg" className="gap-2">
+                <Search className="h-5 w-5" />
+                Encontrar cuidadores
+              </Button>
+            </Link>
+          )}
+          {isCuidador && (
+            <Link to="/dashboard/cuidador">
+              <Button size="lg" className="gap-2">
+                <Stethoscope className="h-5 w-5" />
+                Meu Painel
+              </Button>
+            </Link>
+          )}
+        </div>
       </div>
     </section>
   );
