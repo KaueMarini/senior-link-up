@@ -14,6 +14,158 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          created_at: string
+          cuidador_id: string | null
+          data_hora: string
+          descricao: string | null
+          id: string
+          status: string
+          tipo: string
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          cuidador_id?: string | null
+          data_hora: string
+          descricao?: string | null
+          id?: string
+          status?: string
+          tipo?: string
+          titulo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          cuidador_id?: string | null
+          data_hora?: string
+          descricao?: string | null
+          id?: string
+          status?: string
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_cuidador_id_fkey"
+            columns: ["cuidador_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      caregiver_reviews: {
+        Row: {
+          created_at: string
+          cuidador_id: string
+          id: string
+          mensagem: string | null
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          cuidador_id: string
+          id?: string
+          mensagem?: string | null
+          tipo?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          cuidador_id?: string
+          id?: string
+          mensagem?: string | null
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caregiver_reviews_cuidador_id_fkey"
+            columns: ["cuidador_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      favorites: {
+        Row: {
+          created_at: string
+          cuidador_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          cuidador_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          cuidador_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_cuidador_id_fkey"
+            columns: ["cuidador_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medical_exams: {
+        Row: {
+          appointment_id: string | null
+          arquivo_url: string | null
+          created_at: string
+          data_exame: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          user_id: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          arquivo_url?: string | null
+          created_at?: string
+          data_exame?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          user_id: string
+        }
+        Update: {
+          appointment_id?: string | null
+          arquivo_url?: string | null
+          created_at?: string
+          data_exame?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medical_exams_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
