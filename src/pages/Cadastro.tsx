@@ -216,8 +216,13 @@ const Cadastro = () => {
                 <SelectItem value="cuidador">Cuidador(a)</SelectItem>
                 <SelectItem value="familiar">Familiar / Responsável</SelectItem>
               </SelectContent>
-            </Select>
+          </Select>
           </div>
+
+          {/* Campos extras para cuidador */}
+          {isCuidador && (
+            <CuidadorFields data={cuidadorData} onChange={setCuidadorData} />
+          )}
 
           <Button type="submit" className="h-12 w-full text-base font-semibold" disabled={loading}>
             {loading ? <><Loader2 className="h-5 w-5 animate-spin" /> Criando conta...</> : "Criar conta"}
