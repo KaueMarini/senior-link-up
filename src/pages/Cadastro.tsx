@@ -13,12 +13,18 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import CuidadorFields, { type CuidadorData } from "@/components/CuidadorFields";
 
 const passwordRules = [
   { label: "Pelo menos 8 caracteres", test: (s: string) => s.length >= 8 },
   { label: "Uma letra maiúscula", test: (s: string) => /[A-Z]/.test(s) },
   { label: "Um caractere especial (!@#$...)", test: (s: string) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(s) },
 ];
+
+const emptyCuidadorData: CuidadorData = {
+  cpf: "", telefone: "", cidade: "", estado: "", especialidade: "",
+  anosExperiencia: "", formacao: "", sobre: "", disponibilidade: "", aceitaTermos: false,
+};
 
 const Cadastro = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -28,12 +34,15 @@ const Cadastro = () => {
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [perfil, setPerfil] = useState("");
+  const [cuidadorData, setCuidadorData] = useState<CuidadorData>(emptyCuidadorData);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const allRulesPass = passwordRules.every((r) => r.test(senha));
   const passwordsMatch = senha === confirmarSenha && confirmarSenha.length > 0;
+
+  const isCuidador = perfil === "cuidador";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,13 +55,28 @@ const Cadastro = () => {
       toast({ title: "Senhas diferentes", description: "As senhas não coincidem.", variant: "destructive" });
       return;
     }
+    if (isCuidador) {
+      if (!cuidadorData.cpf || !cuidadorData.telefone || !cuidadorData.cidade || !cuidadorData.estado || !cuidadorData.especialidade || !cuidadorData.anosExperiencia || !cuidadorData.disponibilidade) {
+        toast({ title: "Dados incompletos", description: "Preencha todos os campos obrigatórios do perfil profissional.", variant: "destructive" });
+        return;
+      }
+      if (!cuidadorData.aceitaTermos) {
+        toast({ title: "Termos obrigatórios", description: "Você precisa aceitar a declaração de veracidade dos dados.", variant: "destructive" });
+        return;
+      }
+    }
 
     setLoading(true);
+    const metadata: Record<string, unknown> = { nome, perfil };
+    if (isCuidador) {
+      metadata.cuidador = cuidadorData;
+    }
+
     const { error } = await supabase.auth.signUp({
       email,
       password: senha,
       options: {
-        data: { nome, perfil },
+        data: metadata,
         emailRedirectTo: window.location.origin,
       },
     });
