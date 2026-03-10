@@ -14,7 +14,102 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          cidade: string | null
+          cpf: string | null
+          created_at: string
+          disponibilidade: string | null
+          especialidade: string | null
+          estado: string | null
+          experiencia: string | null
+          formacao: string | null
+          id: string
+          nome: string
+          perfil: string
+          preco_diaria: string | null
+          telefone: string | null
+          updated_at: string
+          user_id: string
+          verificado: boolean | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          cidade?: string | null
+          cpf?: string | null
+          created_at?: string
+          disponibilidade?: string | null
+          especialidade?: string | null
+          estado?: string | null
+          experiencia?: string | null
+          formacao?: string | null
+          id?: string
+          nome?: string
+          perfil?: string
+          preco_diaria?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id: string
+          verificado?: boolean | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          cidade?: string | null
+          cpf?: string | null
+          created_at?: string
+          disponibilidade?: string | null
+          especialidade?: string | null
+          estado?: string | null
+          experiencia?: string | null
+          formacao?: string | null
+          id?: string
+          nome?: string
+          perfil?: string
+          preco_diaria?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string
+          verificado?: boolean | null
+        }
+        Relationships: []
+      }
+      video_tips: {
+        Row: {
+          categoria: string
+          created_at: string
+          descricao: string | null
+          id: string
+          ordem: number | null
+          thumbnail_url: string | null
+          titulo: string
+          url: string
+        }
+        Insert: {
+          categoria?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          ordem?: number | null
+          thumbnail_url?: string | null
+          titulo: string
+          url: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          ordem?: number | null
+          thumbnail_url?: string | null
+          titulo?: string
+          url?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
