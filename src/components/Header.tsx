@@ -1,8 +1,12 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { LogOut, UserCircle } from "lucide-react";
 import logo from "@/assets/logo.png";
+import { useAuth } from "@/hooks/useAuth";
 
 const Header = () => {
+  const { user, loading, signOut, userName } = useAuth();
+
   return (
     <header className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-md">
       <div className="container flex h-20 items-center justify-between">
@@ -12,13 +16,29 @@ const Header = () => {
             Fly Care
           </span>
         </Link>
+
         <nav className="flex items-center gap-3">
-          <Link to="/login">
-            <Button variant="outline">Entrar</Button>
-          </Link>
-          <Link to="/cadastro">
-            <Button>Começar agora</Button>
-          </Link>
+          {loading ? null : user ? (
+            <>
+              <div className="flex items-center gap-2 text-sm text-foreground">
+                <UserCircle className="h-5 w-5 text-primary" />
+                <span className="font-medium">Olá, {userName}!</span>
+              </div>
+              <Button variant="outline" size="sm" onClick={signOut}>
+                <LogOut className="h-4 w-4" />
+                Sair
+              </Button>
+            </>
+          ) : (
+            <>
+              <Link to="/login">
+                <Button variant="outline">Entrar</Button>
+              </Link>
+              <Link to="/cadastro">
+                <Button>Começar agora</Button>
+              </Link>
+            </>
+          )}
         </nav>
       </div>
     </header>
