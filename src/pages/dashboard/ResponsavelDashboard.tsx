@@ -2,11 +2,12 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import Header from "@/components/Header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Heart, Calendar, FileText } from "lucide-react";
+import { Users, Heart, Calendar, FileText, Pill } from "lucide-react";
 import BuscarCuidadores from "@/components/dashboard/responsavel/BuscarCuidadores";
 import MeusFavoritos from "@/components/dashboard/responsavel/MeusFavoritos";
 import AgendaInteligente from "@/components/dashboard/responsavel/AgendaInteligente";
 import ExamesMedicos from "@/components/dashboard/responsavel/ExamesMedicos";
+import AgendaRemedios from "@/components/dashboard/responsavel/AgendaRemedios";
 
 const ResponsavelDashboard = () => {
   const { userName } = useAuth();
@@ -25,7 +26,7 @@ const ResponsavelDashboard = () => {
         </div>
 
         <Tabs defaultValue="cuidadores" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
             <TabsTrigger value="cuidadores" className="gap-2">
               <Users className="h-4 w-4" /> Cuidadores
             </TabsTrigger>
@@ -34,6 +35,9 @@ const ResponsavelDashboard = () => {
             </TabsTrigger>
             <TabsTrigger value="agenda" className="gap-2">
               <Calendar className="h-4 w-4" /> Agenda
+            </TabsTrigger>
+            <TabsTrigger value="remedios" className="gap-2">
+              <Pill className="h-4 w-4" /> Remédios
             </TabsTrigger>
             <TabsTrigger value="exames" className="gap-2">
               <FileText className="h-4 w-4" /> Exames
@@ -48,6 +52,9 @@ const ResponsavelDashboard = () => {
           </TabsContent>
           <TabsContent value="agenda">
             <AgendaInteligente />
+          </TabsContent>
+          <TabsContent value="remedios">
+            <AgendaRemedios />
           </TabsContent>
           <TabsContent value="exames">
             <ExamesMedicos />

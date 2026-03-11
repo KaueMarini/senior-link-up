@@ -166,6 +166,54 @@ export type Database = {
           },
         ]
       }
+      medications: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          data_fim: string | null
+          data_inicio: string | null
+          dias_semana: string[] | null
+          dosagem: string | null
+          frequencia: string
+          horarios: string[] | null
+          id: string
+          nome: string
+          observacoes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          dias_semana?: string[] | null
+          dosagem?: string | null
+          frequencia?: string
+          horarios?: string[] | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          dias_semana?: string[] | null
+          dosagem?: string | null
+          frequencia?: string
+          horarios?: string[] | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
