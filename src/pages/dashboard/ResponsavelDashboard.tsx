@@ -53,6 +53,9 @@ const ResponsavelDashboard = () => {
           <TabsContent value="agenda">
             <AgendaInteligente />
           </TabsContent>
+          <TabsContent value="remedios">
+            <AgendaRemedios />
+          </TabsContent>
           <TabsContent value="exames">
             <ExamesMedicos />
           </TabsContent>
