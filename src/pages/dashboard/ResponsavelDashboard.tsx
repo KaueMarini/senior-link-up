@@ -26,7 +26,7 @@ const ResponsavelDashboard = () => {
         </div>
 
         <Tabs defaultValue="cuidadores" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
             <TabsTrigger value="cuidadores" className="gap-2">
               <Users className="h-4 w-4" /> Cuidadores
             </TabsTrigger>
@@ -35,6 +35,9 @@ const ResponsavelDashboard = () => {
             </TabsTrigger>
             <TabsTrigger value="agenda" className="gap-2">
               <Calendar className="h-4 w-4" /> Agenda
+            </TabsTrigger>
+            <TabsTrigger value="remedios" className="gap-2">
+              <Pill className="h-4 w-4" /> Remédios
             </TabsTrigger>
             <TabsTrigger value="exames" className="gap-2">
               <FileText className="h-4 w-4" /> Exames
