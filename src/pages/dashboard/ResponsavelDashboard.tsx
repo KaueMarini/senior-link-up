@@ -2,11 +2,12 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import Header from "@/components/Header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Heart, Calendar, FileText } from "lucide-react";
+import { Users, Heart, Calendar, FileText, Pill } from "lucide-react";
 import BuscarCuidadores from "@/components/dashboard/responsavel/BuscarCuidadores";
 import MeusFavoritos from "@/components/dashboard/responsavel/MeusFavoritos";
 import AgendaInteligente from "@/components/dashboard/responsavel/AgendaInteligente";
 import ExamesMedicos from "@/components/dashboard/responsavel/ExamesMedicos";
+import AgendaRemedios from "@/components/dashboard/responsavel/AgendaRemedios";
 
 const ResponsavelDashboard = () => {
   const { userName } = useAuth();
