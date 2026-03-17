@@ -87,14 +87,19 @@ const Cadastro = () => {
       return;
     }
 
-    // After signup, update the profile with cuidador data if applicable
-    if (isCuidador && signUpData?.user) {
-      const { supabase: sbClient } = await import("@/lib/supabase");
-      // Wait a moment for the trigger to create the profile
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      await sbClient
-        .from("profiles")
-        .update({
+    // After signup, upsert the profile to ensure data is saved
+    if (signUpData?.user) {
+      // Wait briefly for the trigger to create the profile row
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      const profileData: Record<string, unknown> = {
+        user_id: signUpData.user.id,
+        nome,
+        perfil: perfil || "familiar",
+      };
+
+      if (isCuidador) {
+        Object.assign(profileData, {
           cpf: cuidadorData.cpf || null,
           telefone: cuidadorData.telefone || null,
           cidade: cuidadorData.cidade || null,
@@ -104,8 +109,23 @@ const Cadastro = () => {
           formacao: cuidadorData.formacao || null,
           disponibilidade: cuidadorData.disponibilidade || null,
           bio: cuidadorData.sobre || null,
-        })
-        .eq("user_id", signUpData.user.id);
+        });
+      }
+
+      // Try update first (trigger may have created the row)
+      const { data: updated } = await supabase
+        .from("profiles")
+        .update(profileData)
+        .eq("user_id", signUpData.user.id)
+        .select()
+        .single();
+
+      // If no row existed yet, insert it
+      if (!updated) {
+        await supabase
+          .from("profiles")
+          .insert(profileData as any);
+      }
     }
 
     toast({ title: "Conta criada! 🎉", description: "Enviamos um e-mail de confirmação para você. Verifique sua caixa de entrada e também a pasta de spam." });
