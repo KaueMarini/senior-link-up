@@ -59,33 +59,57 @@ const AgendaInteligente = () => {
   useEffect(() => { fetchAppointments(); }, [user]);
 
   const handleCreate = async () => {
-    if (!user || !form.titulo || !form.data_hora) {
-      toast.error("Preencha título e data/hora");
+    if (!user) {
+      toast.error("Você precisa estar logado");
       return;
     }
+    if (!form.titulo.trim()) {
+      toast.error("Preencha o título do agendamento");
+      return;
+    }
+    if (!form.data || !form.hora) {
+      toast.error("Preencha a data e o horário");
+      return;
+    }
+
+    const dataHora = new Date(`${form.data}T${form.hora}`);
+    if (isNaN(dataHora.getTime())) {
+      toast.error("Data ou horário inválidos");
+      return;
+    }
+
     const { error } = await supabase.from("appointments").insert({
       user_id: user.id,
-      titulo: form.titulo,
-      descricao: form.descricao || null,
-      data_hora: new Date(form.data_hora).toISOString(),
+      titulo: form.titulo.trim(),
+      descricao: form.descricao?.trim() || null,
+      data_hora: dataHora.toISOString(),
       tipo: form.tipo,
     });
-    if (error) { toast.error("Erro ao criar agendamento"); return; }
+
+    if (error) {
+      console.error("Erro ao criar agendamento:", error);
+      toast.error("Erro ao criar agendamento: " + error.message);
+      return;
+    }
+
     toast.success("Agendamento criado!");
 
     // Send webhook notification
-    if (profile?.telefone) {
+    const telefone = profile?.telefone;
+    if (telefone) {
       const tipoLabel = tipoLabels[form.tipo] || form.tipo;
       sendNotification("agendamento", {
-        titulo: form.titulo,
+        titulo: form.titulo.trim(),
         tipo: tipoLabel,
-        data_hora: new Date(form.data_hora).toLocaleString("pt-BR"),
+        data_hora: dataHora.toLocaleString("pt-BR"),
         descricao: form.descricao || "",
-      }, profile.telefone);
+      }, telefone);
+    } else {
+      console.warn("Webhook não enviado: telefone não cadastrado no perfil");
     }
 
     setShowDialog(false);
-    setForm({ titulo: "", descricao: "", data_hora: "", tipo: "consulta" });
+    setForm({ titulo: "", descricao: "", data: "", hora: "", tipo: "consulta" });
     fetchAppointments();
   };
 
