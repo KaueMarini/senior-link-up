@@ -9,10 +9,7 @@ serve(async (_req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get current time and time 30 minutes from now
     const now = new Date();
-    const currentHour = now.getHours().toString().padStart(2, "0");
-    const currentMinute = now.getMinutes().toString().padStart(2, "0");
 
     // Calculate 30 minutes from now
     const reminderTime = new Date(now.getTime() + 30 * 60 * 1000);
@@ -20,14 +17,13 @@ serve(async (_req) => {
     const reminderMinute = reminderTime.getMinutes().toString().padStart(2, "0");
     const targetTime = `${reminderHour}:${reminderMinute}`;
 
-    // Get day of week
     const diasMap = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
     const today = diasMap[now.getDay()];
 
     // Fetch active medications that have this time in their horarios
     const { data: medications, error } = await supabase
       .from("medications")
-      .select("*, profiles!inner(telefone, nome)")
+      .select("*")
       .eq("ativo", true)
       .contains("horarios", [targetTime]);
 
@@ -38,11 +34,17 @@ serve(async (_req) => {
 
     let sent = 0;
     for (const med of medications || []) {
-      // Check if today is in dias_semana (or dias_semana is empty = every day)
       const dias = med.dias_semana || [];
       if (dias.length > 0 && !dias.includes(today)) continue;
 
-      const telefone = (med as any).profiles?.telefone;
+      // Fetch user profile to get phone
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("telefone")
+        .eq("user_id", med.user_id)
+        .single();
+
+      const telefone = profile?.telefone;
       if (!telefone) continue;
 
       const mensagem = `⏰ *Lembrete de remédio!*\n\nEstá quase na hora de tomar:\nRemédio: ${med.nome}\nDosagem: ${med.dosagem || "Não informada"}\nHorário: ${targetTime}\n\n💊 Não se esqueça!`;
