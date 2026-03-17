@@ -2,3 +2,6 @@ project_id = "xsarerwajwoyrfqmikdo"
 
 [functions.notify-webhook]
 verify_jwt = false
+
+[functions.medication-reminders]
+verify_jwt = false
