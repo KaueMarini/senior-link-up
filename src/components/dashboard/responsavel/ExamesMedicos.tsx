@@ -62,6 +62,16 @@ const ExamesMedicos = () => {
     setUploading(false);
     if (error) { toast.error("Erro ao salvar exame"); return; }
     toast.success("Exame salvo com sucesso!");
+
+    // Send webhook notification
+    if (profile?.telefone) {
+      sendNotification("exame", {
+        nome: form.nome,
+        data: form.data_exame ? new Date(form.data_exame).toLocaleDateString("pt-BR") : "",
+        descricao: form.descricao || "",
+      }, profile.telefone);
+    }
+
     setShowDialog(false);
     setForm({ nome: "", descricao: "", data_exame: "" });
     setSelectedFile(null);
