@@ -72,7 +72,7 @@ const Cadastro = () => {
       metadata.cuidador = cuidadorData;
     }
 
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email,
       password: senha,
       options: {
@@ -85,6 +85,27 @@ const Cadastro = () => {
     if (error) {
       toast({ title: "Erro ao criar conta", description: error.message, variant: "destructive" });
       return;
+    }
+
+    // After signup, update the profile with cuidador data if applicable
+    if (isCuidador && signUpData?.user) {
+      const { supabase: sbClient } = await import("@/lib/supabase");
+      // Wait a moment for the trigger to create the profile
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      await sbClient
+        .from("profiles")
+        .update({
+          cpf: cuidadorData.cpf || null,
+          telefone: cuidadorData.telefone || null,
+          cidade: cuidadorData.cidade || null,
+          estado: cuidadorData.estado || null,
+          especialidade: cuidadorData.especialidade || null,
+          experiencia: cuidadorData.anosExperiencia || null,
+          formacao: cuidadorData.formacao || null,
+          disponibilidade: cuidadorData.disponibilidade || null,
+          bio: cuidadorData.sobre || null,
+        })
+        .eq("user_id", signUpData.user.id);
     }
 
     toast({ title: "Conta criada! 🎉", description: "Enviamos um e-mail de confirmação para você. Verifique sua caixa de entrada e também a pasta de spam." });
