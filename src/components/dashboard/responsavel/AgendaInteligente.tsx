@@ -72,6 +72,18 @@ const AgendaInteligente = () => {
     });
     if (error) { toast.error("Erro ao criar agendamento"); return; }
     toast.success("Agendamento criado!");
+
+    // Send webhook notification
+    if (profile?.telefone) {
+      const tipoLabel = tipoLabels[form.tipo] || form.tipo;
+      sendNotification("agendamento", {
+        titulo: form.titulo,
+        tipo: tipoLabel,
+        data_hora: new Date(form.data_hora).toLocaleString("pt-BR"),
+        descricao: form.descricao || "",
+      }, profile.telefone);
+    }
+
     setShowDialog(false);
     setForm({ titulo: "", descricao: "", data_hora: "", tipo: "consulta" });
     fetchAppointments();
