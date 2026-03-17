@@ -15,6 +15,7 @@ type MedicalExam = Tables<"medical_exams">;
 
 const ExamesMedicos = () => {
   const { user } = useAuth();
+  const { profile } = useProfile();
   const [exames, setExames] = useState<MedicalExam[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
