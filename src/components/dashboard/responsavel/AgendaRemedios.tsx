@@ -52,6 +52,7 @@ const diasSemana = [
 
 const AgendaRemedios = () => {
   const { user } = useAuth();
+  const { profile } = useProfile();
   const [medications, setMedications] = useState<Medication[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
