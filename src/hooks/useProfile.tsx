@@ -30,7 +30,7 @@ export const useProfile = () => {
   }, [user]);
 
   const updateProfile = async (updates: Partial<Profile>) => {
-    if (!user) return;
+    if (!user) return { data: null, error: "Não autenticado" };
     const { data, error } = await supabase
       .from("profiles")
       .update(updates)
