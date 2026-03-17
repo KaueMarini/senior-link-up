@@ -43,7 +43,7 @@ const AgendaInteligente = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
-  const [form, setForm] = useState({ titulo: "", descricao: "", data_hora: "", tipo: "consulta" });
+  const [form, setForm] = useState({ titulo: "", descricao: "", data: "", hora: "", tipo: "consulta" });
 
   const fetchAppointments = async () => {
     if (!user) return;
