@@ -103,6 +103,18 @@ const AgendaRemedios = () => {
       return;
     }
     toast.success("Remédio agendado com sucesso!");
+
+    // Send webhook notification
+    if (profile?.telefone) {
+      const frequenciaLabel = frequenciaLabels[form.frequencia] || form.frequencia;
+      sendNotification("remedio", {
+        nome: form.nome,
+        dosagem: form.dosagem || "",
+        frequencia: frequenciaLabel,
+        horarios: form.horarios.filter(Boolean).join(", "),
+      }, profile.telefone);
+    }
+
     setShowDialog(false);
     setForm({ nome: "", dosagem: "", frequencia: "diario", dias_semana: [], horarios: ["08:00"], observacoes: "", data_inicio: "", data_fim: "" });
     fetchMedications();
