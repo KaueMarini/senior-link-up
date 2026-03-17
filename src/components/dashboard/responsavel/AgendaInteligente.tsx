@@ -246,9 +246,15 @@ const AgendaInteligente = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <label className="text-sm font-medium text-foreground">Data e hora</label>
-              <Input type="datetime-local" value={form.data_hora} onChange={(e) => setForm({ ...form, data_hora: e.target.value })} />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm font-medium text-foreground">Data</label>
+                <Input type="date" value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground">Horário</label>
+                <Input type="time" value={form.hora} onChange={(e) => setForm({ ...form, hora: e.target.value })} />
+              </div>
             </div>
             <div>
               <label className="text-sm font-medium text-foreground">Descrição (opcional)</label>
