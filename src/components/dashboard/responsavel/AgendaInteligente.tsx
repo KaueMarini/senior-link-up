@@ -39,6 +39,7 @@ const tipoLabels: Record<string, string> = {
 
 const AgendaInteligente = () => {
   const { user } = useAuth();
+  const { profile } = useProfile();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
