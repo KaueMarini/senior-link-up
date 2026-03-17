@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
+import { sendNotification } from "@/lib/notifications";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +52,7 @@ const diasSemana = [
 
 const AgendaRemedios = () => {
   const { user } = useAuth();
+  const { profile } = useProfile();
   const [medications, setMedications] = useState<Medication[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
@@ -100,6 +103,18 @@ const AgendaRemedios = () => {
       return;
     }
     toast.success("Remédio agendado com sucesso!");
+
+    // Send webhook notification
+    if (profile?.telefone) {
+      const frequenciaLabel = frequenciaLabels[form.frequencia] || form.frequencia;
+      sendNotification("remedio", {
+        nome: form.nome,
+        dosagem: form.dosagem || "",
+        frequencia: frequenciaLabel,
+        horarios: form.horarios.filter(Boolean).join(", "),
+      }, profile.telefone);
+    }
+
     setShowDialog(false);
     setForm({ nome: "", dosagem: "", frequencia: "diario", dias_semana: [], horarios: ["08:00"], observacoes: "", data_inicio: "", data_fim: "" });
     fetchMedications();

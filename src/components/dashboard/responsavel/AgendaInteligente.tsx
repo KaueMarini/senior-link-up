@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
+import { sendNotification } from "@/lib/notifications";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +39,7 @@ const tipoLabels: Record<string, string> = {
 
 const AgendaInteligente = () => {
   const { user } = useAuth();
+  const { profile } = useProfile();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
@@ -69,6 +72,18 @@ const AgendaInteligente = () => {
     });
     if (error) { toast.error("Erro ao criar agendamento"); return; }
     toast.success("Agendamento criado!");
+
+    // Send webhook notification
+    if (profile?.telefone) {
+      const tipoLabel = tipoLabels[form.tipo] || form.tipo;
+      sendNotification("agendamento", {
+        titulo: form.titulo,
+        tipo: tipoLabel,
+        data_hora: new Date(form.data_hora).toLocaleString("pt-BR"),
+        descricao: form.descricao || "",
+      }, profile.telefone);
+    }
+
     setShowDialog(false);
     setForm({ titulo: "", descricao: "", data_hora: "", tipo: "consulta" });
     fetchAppointments();

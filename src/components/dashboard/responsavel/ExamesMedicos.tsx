@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
+import { sendNotification } from "@/lib/notifications";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +15,7 @@ type MedicalExam = Tables<"medical_exams">;
 
 const ExamesMedicos = () => {
   const { user } = useAuth();
+  const { profile } = useProfile();
   const [exames, setExames] = useState<MedicalExam[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
@@ -59,6 +62,16 @@ const ExamesMedicos = () => {
     setUploading(false);
     if (error) { toast.error("Erro ao salvar exame"); return; }
     toast.success("Exame salvo com sucesso!");
+
+    // Send webhook notification
+    if (profile?.telefone) {
+      sendNotification("exame", {
+        nome: form.nome,
+        data: form.data_exame ? new Date(form.data_exame).toLocaleDateString("pt-BR") : "",
+        descricao: form.descricao || "",
+      }, profile.telefone);
+    }
+
     setShowDialog(false);
     setForm({ nome: "", descricao: "", data_exame: "" });
     setSelectedFile(null);

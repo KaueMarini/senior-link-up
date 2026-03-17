@@ -1,16 +1,29 @@
-import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import Header from "@/components/Header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Heart, Calendar, FileText, Pill } from "lucide-react";
+import { Users, Heart, Calendar, FileText, Pill, User } from "lucide-react";
 import BuscarCuidadores from "@/components/dashboard/responsavel/BuscarCuidadores";
 import MeusFavoritos from "@/components/dashboard/responsavel/MeusFavoritos";
 import AgendaInteligente from "@/components/dashboard/responsavel/AgendaInteligente";
 import ExamesMedicos from "@/components/dashboard/responsavel/ExamesMedicos";
 import AgendaRemedios from "@/components/dashboard/responsavel/AgendaRemedios";
+import MeuPerfil from "@/components/dashboard/responsavel/MeuPerfil";
 
 const ResponsavelDashboard = () => {
-  const { userName } = useAuth();
+  const { userName, user } = useAuth();
+  const { profile, loading, updateProfile, uploadAvatar } = useProfile();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex items-center justify-center py-20">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -25,8 +38,11 @@ const ResponsavelDashboard = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="cuidadores" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
+        <Tabs defaultValue="perfil" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
+            <TabsTrigger value="perfil" className="gap-2">
+              <User className="h-4 w-4" /> Perfil
+            </TabsTrigger>
             <TabsTrigger value="cuidadores" className="gap-2">
               <Users className="h-4 w-4" /> Cuidadores
             </TabsTrigger>
@@ -44,6 +60,14 @@ const ResponsavelDashboard = () => {
             </TabsTrigger>
           </TabsList>
 
+          <TabsContent value="perfil">
+            <MeuPerfil
+              profile={profile}
+              onUpdate={updateProfile}
+              onUploadAvatar={uploadAvatar}
+              userEmail={user?.email || ""}
+            />
+          </TabsContent>
           <TabsContent value="cuidadores">
             <BuscarCuidadores />
           </TabsContent>
