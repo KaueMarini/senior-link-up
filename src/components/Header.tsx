@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut, UserCircle } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useAuth } from "@/hooks/useAuth";
+import NotificationBell from "@/components/NotificationBell";
 
 const Header = () => {
   const { user, loading, signOut, userName } = useAuth();
