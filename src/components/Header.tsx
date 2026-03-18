@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut, UserCircle } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useAuth } from "@/hooks/useAuth";
+import NotificationBell from "@/components/NotificationBell";
 
 const Header = () => {
   const { user, loading, signOut, userName } = useAuth();
@@ -26,6 +27,7 @@ const Header = () => {
         <nav className="flex items-center gap-3">
           {loading ? null : user ? (
             <>
+              <NotificationBell />
               <div className="flex items-center gap-2 text-sm text-foreground">
                 <UserCircle className="h-5 w-5 text-primary" />
                 <span className="font-medium">Olá, {userName}!</span>
