@@ -36,6 +36,10 @@ const CuidadorPerfil = ({ profile, onUpdate, onUploadAvatar }: Props) => {
   };
 
   const handleSave = async () => {
+    if (form.telefone && !telefoneVerificado) {
+      toast.error("Verifique seu WhatsApp antes de salvar");
+      return;
+    }
     setSaving(true);
     const { error } = await onUpdate(form);
     setSaving(false);
