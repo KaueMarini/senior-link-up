@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Star, MapPin, Briefcase, Heart, ThumbsUp, ThumbsDown, MessageSquare, BadgeCheck, Phone } from "lucide-react";
+import { Search, Star, MapPin, Briefcase, Heart, ThumbsUp, ThumbsDown, MessageSquare, BadgeCheck, Phone, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 
