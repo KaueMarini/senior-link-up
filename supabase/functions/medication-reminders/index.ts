@@ -37,15 +37,18 @@ serve(async (_req) => {
       const dias = med.dias_semana || [];
       if (dias.length > 0 && !dias.includes(today)) continue;
 
-      // Fetch user profile to get phone
+      // Fetch user profile and auth email
       const { data: profile } = await supabase
         .from("profiles")
-        .select("telefone")
+        .select("telefone, user_id")
         .eq("user_id", med.user_id)
         .single();
 
       const telefone = profile?.telefone;
       if (!telefone) continue;
+
+      // Get user email from auth
+      const { data: { user: authUser } } = await supabase.auth.admin.getUserById(med.user_id);
 
       const mensagem = `⏰ *Lembrete de remédio!*\n\nEstá quase na hora de tomar:\nRemédio: ${med.nome}\nDosagem: ${med.dosagem || "Não informada"}\nHorário: ${targetTime}\n\n💊 Não se esqueça!`;
 
