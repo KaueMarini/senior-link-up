@@ -118,15 +118,18 @@ const WhatsAppVerification = ({
             </span>
           )}
         </Label>
-        <div className="flex gap-2">
-          <Input
-            value={telefone}
-            onChange={(e) => handleTelefoneChange(e.target.value)}
-            placeholder="5511999999999"
-            className="h-12 text-base font-mono"
-            disabled={verified}
-            maxLength={15}
-          />
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="relative flex-1">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-mono text-muted-foreground">+</span>
+            <Input
+              value={telefone}
+              onChange={(e) => handleTelefoneChange(e.target.value)}
+              placeholder="5511999999999"
+              className="h-12 pl-7 text-base font-mono"
+              disabled={verified}
+              maxLength={15}
+            />
+          </div>
           {!verified && step === "input" && (
             <Button
               type="button"
