@@ -14,7 +14,7 @@ import type { CuidadorComment } from "./CuidadorCard";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-type Profile = Tables<"profiles">;
+type Profile = Tables<"profiles"> & { banner_url?: string | null };
 
 interface CuidadorProfileDialogProps {
   cuidador: Profile | null;
@@ -72,7 +72,13 @@ const CuidadorProfileDialog = ({
       <DialogContent className="max-w-2xl p-0 overflow-hidden gap-0">
         {/* Hero header with large photo */}
         <div className="relative h-48 bg-gradient-to-br from-primary/20 via-primary/10 to-accent/10 overflow-hidden">
-          {cuidador.avatar_url ? (
+          {(cuidador as any).banner_url ? (
+            <img
+              src={(cuidador as any).banner_url}
+              alt="Banner"
+              className="w-full h-full object-cover"
+            />
+          ) : cuidador.avatar_url ? (
             <img
               src={cuidador.avatar_url}
               alt={cuidador.nome}

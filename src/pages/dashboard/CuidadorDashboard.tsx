@@ -12,7 +12,7 @@ import CuidadorConfiguracoes from "@/components/dashboard/CuidadorConfiguracoes"
 
 const CuidadorDashboard = () => {
   const { userName } = useAuth();
-  const { profile, loading, updateProfile, uploadAvatar } = useProfile();
+  const { profile, loading, updateProfile, uploadAvatar, uploadBanner } = useProfile();
 
   if (loading) {
     return (
@@ -62,6 +62,7 @@ const CuidadorDashboard = () => {
               profile={profile}
               onUpdate={updateProfile}
               onUploadAvatar={uploadAvatar}
+              onUploadBanner={uploadBanner}
             />
           </TabsContent>
 

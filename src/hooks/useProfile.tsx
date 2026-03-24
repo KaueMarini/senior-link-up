@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import type { Tables } from "@/integrations/supabase/types";
 
-export type Profile = Tables<"profiles">;
+export type Profile = Tables<"profiles"> & { banner_url?: string | null };
 
 export const useProfile = () => {
   const { user } = useAuth();
@@ -21,7 +21,7 @@ export const useProfile = () => {
       .select("*")
       .eq("user_id", user.id)
       .single();
-    setProfile(data);
+    setProfile(data as Profile | null);
     setLoading(false);
   };
 
@@ -33,11 +33,11 @@ export const useProfile = () => {
     if (!user) return { data: null, error: "Não autenticado" };
     const { data, error } = await supabase
       .from("profiles")
-      .update(updates)
+      .update(updates as any)
       .eq("user_id", user.id)
       .select()
       .single();
-    if (!error && data) setProfile(data);
+    if (!error && data) setProfile(data as Profile);
     return { data, error };
   };
 
@@ -55,5 +55,19 @@ export const useProfile = () => {
     return { url, error: null };
   };
 
-  return { profile, loading, updateProfile, uploadAvatar, refetch: fetchProfile };
+  const uploadBanner = async (file: File) => {
+    if (!user) return { url: null, error: "Não autenticado" };
+    const ext = file.name.split(".").pop();
+    const path = `${user.id}/banner.${ext}`;
+    const { error } = await supabase.storage
+      .from("avatars")
+      .upload(path, file, { upsert: true });
+    if (error) return { url: null, error: error.message };
+    const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+    const url = `${urlData.publicUrl}?t=${Date.now()}`;
+    await updateProfile({ banner_url: url } as any);
+    return { url, error: null };
+  };
+
+  return { profile, loading, updateProfile, uploadAvatar, uploadBanner, refetch: fetchProfile };
 };

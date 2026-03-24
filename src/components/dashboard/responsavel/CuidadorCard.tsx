@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
-type Profile = Tables<"profiles">;
+type Profile = Tables<"profiles"> & { banner_url?: string | null };
 
 export interface CuidadorComment {
   id: string;
@@ -57,7 +57,14 @@ const CuidadorCard = ({
     <Card className="group overflow-hidden border-border/60 hover:border-primary/30 hover:shadow-xl transition-all duration-300 relative">
       {/* Hero photo section */}
       <div className="relative h-44 bg-gradient-to-br from-primary/20 via-primary/10 to-accent/10 overflow-hidden">
-        {c.avatar_url ? (
+        {/* Banner or avatar as background */}
+        {(c as any).banner_url ? (
+          <img
+            src={(c as any).banner_url}
+            alt="Banner"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        ) : c.avatar_url ? (
           <img
             src={c.avatar_url}
             alt={c.nome}
@@ -89,14 +96,31 @@ const CuidadorCard = ({
           </div>
         )}
 
-        {/* Like count overlay */}
-        <div className="absolute bottom-3 left-3 flex items-center gap-1.5">
-          <div className="flex items-center gap-1 bg-card/85 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-sm">
-            <ThumbsUp className="h-3.5 w-3.5 text-primary" />
-            <span className="text-xs font-bold text-foreground">{likeCount}</span>
-            <span className="text-[10px] text-muted-foreground">curtida{likeCount !== 1 ? "s" : ""}</span>
+        {/* Avatar overlay when banner exists */}
+        {(c as any).banner_url && (
+          <div className="absolute bottom-3 left-3 flex items-center gap-2">
+            <Avatar className="h-10 w-10 border-2 border-card shadow-md">
+              <AvatarImage src={c.avatar_url || ""} className="object-cover" />
+              <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">{initials}</AvatarFallback>
+            </Avatar>
+            <div className="flex items-center gap-1 bg-card/85 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-sm">
+              <ThumbsUp className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-bold text-foreground">{likeCount}</span>
+              <span className="text-[10px] text-muted-foreground">curtida{likeCount !== 1 ? "s" : ""}</span>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Like count when no banner */}
+        {!(c as any).banner_url && (
+          <div className="absolute bottom-3 left-3 flex items-center gap-1.5">
+            <div className="flex items-center gap-1 bg-card/85 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-sm">
+              <ThumbsUp className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-bold text-foreground">{likeCount}</span>
+              <span className="text-[10px] text-muted-foreground">curtida{likeCount !== 1 ? "s" : ""}</span>
+            </div>
+          </div>
+        )}
 
         {/* Price overlay */}
         {c.preco_diaria && (
