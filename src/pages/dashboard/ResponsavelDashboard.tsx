@@ -2,9 +2,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import Header from "@/components/Header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Heart, Calendar, FileText, Pill, User } from "lucide-react";
+import { Users, Heart, Calendar, FileText, Pill, User, MessageSquare } from "lucide-react";
 import BuscarCuidadores from "@/components/dashboard/responsavel/BuscarCuidadores";
 import MeusFavoritos from "@/components/dashboard/responsavel/MeusFavoritos";
+import ChatTab from "@/components/chat/ChatTab";
 import AgendaInteligente from "@/components/dashboard/responsavel/AgendaInteligente";
 import ExamesMedicos from "@/components/dashboard/responsavel/ExamesMedicos";
 import AgendaRemedios from "@/components/dashboard/responsavel/AgendaRemedios";
@@ -39,12 +40,15 @@ const ResponsavelDashboard = () => {
         </div>
 
         <Tabs defaultValue="perfil" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-grid">
             <TabsTrigger value="perfil" className="gap-2">
               <User className="h-4 w-4" /> Perfil
             </TabsTrigger>
             <TabsTrigger value="cuidadores" className="gap-2">
               <Users className="h-4 w-4" /> Cuidadores
+            </TabsTrigger>
+            <TabsTrigger value="chat" className="gap-2">
+              <MessageSquare className="h-4 w-4" /> Chat
             </TabsTrigger>
             <TabsTrigger value="favoritos" className="gap-2">
               <Heart className="h-4 w-4" /> Favoritos
@@ -70,6 +74,9 @@ const ResponsavelDashboard = () => {
           </TabsContent>
           <TabsContent value="cuidadores">
             <BuscarCuidadores />
+          </TabsContent>
+          <TabsContent value="chat">
+            <ChatTab />
           </TabsContent>
           <TabsContent value="favoritos">
             <MeusFavoritos />

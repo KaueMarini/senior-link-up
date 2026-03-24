@@ -96,6 +96,68 @@ export type Database = {
           },
         ]
       }
+      chat_conversations: {
+        Row: {
+          created_at: string
+          cuidador_id: string
+          id: string
+          responsavel_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          cuidador_id: string
+          id?: string
+          responsavel_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          cuidador_id?: string
+          id?: string
+          responsavel_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          read: boolean
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          read?: boolean
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          read?: boolean
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       favorites: {
         Row: {
           created_at: string

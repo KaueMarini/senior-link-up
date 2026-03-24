@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Star, MapPin, Briefcase, Heart, ThumbsUp, ThumbsDown, MessageSquare, BadgeCheck, Phone } from "lucide-react";
+import { Search, Star, MapPin, Briefcase, Heart, ThumbsUp, ThumbsDown, MessageSquare, BadgeCheck, Phone, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -90,6 +90,33 @@ const BuscarCuidadores = () => {
     toast.success(tipo === "like" ? "Você curtiu este cuidador!" : "Avaliação registrada");
   };
 
+  const startChat = async (cuidadorId: string) => {
+    if (!user) return;
+    // Check if conversation exists
+    const { data: existing } = await supabase
+      .from("chat_conversations")
+      .select("id")
+      .eq("responsavel_id", user.id)
+      .eq("cuidador_id", cuidadorId)
+      .maybeSingle();
+
+    if (existing) {
+      toast.info("Você já tem uma conversa com este cuidador. Veja na aba Chat!");
+      return;
+    }
+
+    const { error } = await supabase.from("chat_conversations").insert({
+      responsavel_id: user.id,
+      cuidador_id: cuidadorId,
+    });
+
+    if (error) {
+      toast.error("Erro ao iniciar chat");
+    } else {
+      toast.success("Chat iniciado! Vá para a aba Chat para conversar.");
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!user || !msgTarget) return;
     const existing = reviews[msgTarget.id];
@@ -167,6 +194,9 @@ const BuscarCuidadores = () => {
                 <Button variant="outline" size="sm" onClick={() => { setMsgTarget(c); setMensagem(reviews[c.id]?.mensagem || ""); setShowMsgDialog(true); }}>
                   <MessageSquare className="h-4 w-4" />
                 </Button>
+                <Button variant="outline" size="sm" onClick={() => startChat(c.user_id)} className="gap-1 text-primary border-primary">
+                  <MessageCircle className="h-4 w-4" /> Chat
+                </Button>
                 <Button size="sm" className="ml-auto" onClick={() => setSelectedCuidador(c)}>
                   Ver perfil
                 </Button>
@@ -227,8 +257,8 @@ const BuscarCuidadores = () => {
                     <Heart className={`h-4 w-4 ${favorites.has(selectedCuidador.id) ? "fill-accent" : ""}`} />
                     {favorites.has(selectedCuidador.id) ? "Favoritado" : "Favoritar"}
                   </Button>
-                  <Button variant="outline" className="flex-1 gap-2" onClick={() => { setMsgTarget(selectedCuidador); setMensagem(reviews[selectedCuidador.id]?.mensagem || ""); setShowMsgDialog(true); setSelectedCuidador(null); }}>
-                    <MessageSquare className="h-4 w-4" /> Mensagem
+                  <Button variant="outline" className="flex-1 gap-2" onClick={() => { startChat(selectedCuidador.user_id); setSelectedCuidador(null); }}>
+                    <MessageCircle className="h-4 w-4" /> Iniciar Chat
                   </Button>
                 </div>
               </div>
