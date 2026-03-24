@@ -57,7 +57,14 @@ const CuidadorCard = ({
     <Card className="group overflow-hidden border-border/60 hover:border-primary/30 hover:shadow-xl transition-all duration-300 relative">
       {/* Hero photo section */}
       <div className="relative h-44 bg-gradient-to-br from-primary/20 via-primary/10 to-accent/10 overflow-hidden">
-        {c.avatar_url ? (
+        {/* Banner or avatar as background */}
+        {(c as any).banner_url ? (
+          <img
+            src={(c as any).banner_url}
+            alt="Banner"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        ) : c.avatar_url ? (
           <img
             src={c.avatar_url}
             alt={c.nome}
