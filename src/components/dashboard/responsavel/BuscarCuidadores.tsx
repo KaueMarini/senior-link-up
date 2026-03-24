@@ -90,6 +90,33 @@ const BuscarCuidadores = () => {
     toast.success(tipo === "like" ? "Você curtiu este cuidador!" : "Avaliação registrada");
   };
 
+  const startChat = async (cuidadorId: string) => {
+    if (!user) return;
+    // Check if conversation exists
+    const { data: existing } = await supabase
+      .from("chat_conversations")
+      .select("id")
+      .eq("responsavel_id", user.id)
+      .eq("cuidador_id", cuidadorId)
+      .maybeSingle();
+
+    if (existing) {
+      toast.info("Você já tem uma conversa com este cuidador. Veja na aba Chat!");
+      return;
+    }
+
+    const { error } = await supabase.from("chat_conversations").insert({
+      responsavel_id: user.id,
+      cuidador_id: cuidadorId,
+    });
+
+    if (error) {
+      toast.error("Erro ao iniciar chat");
+    } else {
+      toast.success("Chat iniciado! Vá para a aba Chat para conversar.");
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!user || !msgTarget) return;
     const existing = reviews[msgTarget.id];
