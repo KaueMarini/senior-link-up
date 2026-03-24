@@ -96,6 +96,39 @@ export type Database = {
           },
         ]
       }
+      certificates: {
+        Row: {
+          arquivo_url: string | null
+          created_at: string
+          data_conclusao: string | null
+          id: string
+          instituicao: string | null
+          nome: string
+          user_id: string
+          verificado: boolean | null
+        }
+        Insert: {
+          arquivo_url?: string | null
+          created_at?: string
+          data_conclusao?: string | null
+          id?: string
+          instituicao?: string | null
+          nome: string
+          user_id: string
+          verificado?: boolean | null
+        }
+        Update: {
+          arquivo_url?: string | null
+          created_at?: string
+          data_conclusao?: string | null
+          id?: string
+          instituicao?: string | null
+          nome?: string
+          user_id?: string
+          verificado?: boolean | null
+        }
+        Relationships: []
+      }
       chat_conversations: {
         Row: {
           created_at: string
