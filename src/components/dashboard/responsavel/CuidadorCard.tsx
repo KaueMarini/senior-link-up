@@ -4,16 +4,26 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   MapPin, Briefcase, Heart, ThumbsUp, ThumbsDown,
-  BadgeCheck, MessageCircle, Clock, GraduationCap, DollarSign, Star,
+  BadgeCheck, MessageCircle, Clock, GraduationCap, DollarSign, Star, MessageSquare,
 } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Profile = Tables<"profiles">;
 
+export interface CuidadorComment {
+  id: string;
+  user_id: string;
+  nome: string;
+  mensagem: string;
+  created_at: string;
+}
+
 interface CuidadorCardProps {
   cuidador: Profile;
   isFavorite: boolean;
   reviewTipo?: string;
+  likeCount: number;
+  comments: CuidadorComment[];
   onToggleFavorite: () => void;
   onLike: () => void;
   onDislike: () => void;
@@ -33,6 +43,8 @@ const CuidadorCard = ({
   cuidador: c,
   isFavorite,
   reviewTipo,
+  likeCount,
+  comments,
   onToggleFavorite,
   onLike,
   onDislike,
@@ -42,86 +54,124 @@ const CuidadorCard = ({
   const initials = (c.nome || "C").slice(0, 2).toUpperCase();
 
   return (
-    <Card className="group overflow-hidden border-border/60 hover:border-primary/30 hover:shadow-lg transition-all duration-300 relative">
-      {/* Top accent bar */}
-      <div className="h-1.5 bg-gradient-to-r from-primary via-primary/70 to-accent" />
+    <Card className="group overflow-hidden border-border/60 hover:border-primary/30 hover:shadow-xl transition-all duration-300 relative">
+      {/* Hero photo section */}
+      <div className="relative h-44 bg-gradient-to-br from-primary/20 via-primary/10 to-accent/10 overflow-hidden">
+        {c.avatar_url ? (
+          <img
+            src={c.avatar_url}
+            alt={c.nome}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <span className="text-5xl font-bold text-primary/30">{initials}</span>
+          </div>
+        )}
 
-      <CardContent className="p-0">
-        {/* Header section */}
-        <div className="relative p-5 pb-3">
-          {/* Favorite button */}
-          <button
-            onClick={onToggleFavorite}
-            className="absolute top-3 right-3 p-2 rounded-full hover:bg-muted transition-colors z-10"
-          >
-            <Heart className={`h-5 w-5 transition-all ${isFavorite ? "fill-accent text-accent scale-110" : "text-muted-foreground hover:text-accent"}`} />
-          </button>
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <Avatar className="h-16 w-16 border-[3px] border-primary/20 shadow-md">
-                <AvatarImage src={c.avatar_url || ""} className="object-cover" />
-                <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/5 text-primary text-lg font-bold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              {c.verificado && (
-                <div className="absolute -bottom-1 -right-1 bg-card rounded-full p-0.5 shadow-sm">
-                  <BadgeCheck className="h-5 w-5 text-primary fill-primary/10" />
-                </div>
-              )}
-            </div>
-            <div className="flex-1 min-w-0 pr-6">
-              <h3 className="font-heading text-lg font-bold text-foreground truncate leading-tight">
-                {c.nome}
-              </h3>
-              <p className="text-sm font-medium text-primary/80 mt-0.5">
-                {c.especialidade || "Cuidador(a) de Idosos"}
-              </p>
+        {/* Favorite button */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
+          className="absolute top-3 right-3 p-2 rounded-full bg-card/80 backdrop-blur-sm hover:bg-card transition-colors z-10 shadow-md"
+        >
+          <Heart className={`h-5 w-5 transition-all ${isFavorite ? "fill-accent text-accent scale-110" : "text-muted-foreground hover:text-accent"}`} />
+        </button>
+
+        {/* Verified badge */}
+        {c.verificado && (
+          <div className="absolute top-3 left-3">
+            <Badge className="bg-primary/90 text-primary-foreground border-0 gap-1 shadow-md backdrop-blur-sm">
+              <BadgeCheck className="h-3.5 w-3.5" /> Verificado
+            </Badge>
+          </div>
+        )}
+
+        {/* Like count overlay */}
+        <div className="absolute bottom-3 left-3 flex items-center gap-1.5">
+          <div className="flex items-center gap-1 bg-card/85 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-sm">
+            <ThumbsUp className="h-3.5 w-3.5 text-primary" />
+            <span className="text-xs font-bold text-foreground">{likeCount}</span>
+            <span className="text-[10px] text-muted-foreground">curtida{likeCount !== 1 ? "s" : ""}</span>
+          </div>
+        </div>
+
+        {/* Price overlay */}
+        {c.preco_diaria && (
+          <div className="absolute bottom-3 right-3 bg-card/85 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-sm">
+            <div className="flex items-baseline gap-0.5">
+              <span className="font-heading text-base font-bold text-foreground">{c.preco_diaria}</span>
+              <span className="text-[10px] text-muted-foreground">/dia</span>
             </div>
           </div>
+        )}
+      </div>
+
+      <CardContent className="p-0">
+        {/* Name & specialty */}
+        <div className="px-4 pt-4 pb-2">
+          <h3 className="font-heading text-lg font-bold text-foreground truncate leading-tight">
+            {c.nome}
+          </h3>
+          <p className="text-sm font-medium text-primary/80 mt-0.5">
+            {c.especialidade || "Cuidador(a) de Idosos"}
+          </p>
         </div>
 
         {/* Bio */}
         {c.bio && (
-          <div className="px-5 pb-3">
-            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed italic">
-              "{c.bio}"
+          <div className="px-4 pb-2">
+            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+              {c.bio}
             </p>
           </div>
         )}
 
         {/* Info chips */}
-        <div className="px-5 pb-3 flex flex-wrap gap-1.5">
+        <div className="px-4 pb-3 flex flex-wrap gap-1.5">
           {c.cidade && (
-            <Badge variant="secondary" className="gap-1 text-xs font-normal py-1 px-2.5">
+            <Badge variant="secondary" className="gap-1 text-[11px] font-normal py-0.5 px-2">
               <MapPin className="h-3 w-3" /> {c.cidade}{c.estado ? `, ${c.estado}` : ""}
             </Badge>
           )}
           {c.experiencia && (
-            <Badge variant="secondary" className="gap-1 text-xs font-normal py-1 px-2.5">
+            <Badge variant="secondary" className="gap-1 text-[11px] font-normal py-0.5 px-2">
               <Briefcase className="h-3 w-3" /> {c.experiencia}
             </Badge>
           )}
           {c.formacao && (
-            <Badge variant="secondary" className="gap-1 text-xs font-normal py-1 px-2.5">
+            <Badge variant="secondary" className="gap-1 text-[11px] font-normal py-0.5 px-2">
               <GraduationCap className="h-3 w-3" /> {c.formacao}
             </Badge>
           )}
           {c.disponibilidade && (
-            <Badge variant="secondary" className="gap-1 text-xs font-normal py-1 px-2.5">
+            <Badge variant="secondary" className="gap-1 text-[11px] font-normal py-0.5 px-2">
               <Clock className="h-3 w-3" /> {disponibilidadeLabel[c.disponibilidade] || c.disponibilidade}
             </Badge>
           )}
         </div>
 
-        {/* Price */}
-        {c.preco_diaria && (
-          <div className="px-5 pb-3">
-            <div className="inline-flex items-center gap-1.5 bg-primary/5 border border-primary/10 rounded-lg px-3 py-1.5">
-              <DollarSign className="h-4 w-4 text-primary" />
-              <span className="font-heading text-base font-bold text-foreground">{c.preco_diaria}</span>
-              <span className="text-xs text-muted-foreground">/diária</span>
+        {/* Recent comments preview */}
+        {comments.length > 0 && (
+          <div className="px-4 pb-3">
+            <div className="bg-muted/30 rounded-lg p-3 border border-border/30 space-y-2">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
+                <MessageSquare className="h-3.5 w-3.5 text-primary" />
+                Comentários ({comments.length})
+              </div>
+              {comments.slice(0, 2).map((comment) => (
+                <div key={comment.id} className="text-xs">
+                  <span className="font-semibold text-foreground">{comment.nome}: </span>
+                  <span className="text-muted-foreground line-clamp-1">{comment.mensagem}</span>
+                </div>
+              ))}
+              {comments.length > 2 && (
+                <p className="text-[11px] text-primary cursor-pointer hover:underline" onClick={onViewProfile}>
+                  Ver todos os {comments.length} comentários
+                </p>
+              )}
             </div>
           </div>
         )}
