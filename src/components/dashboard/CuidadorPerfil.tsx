@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, Save, MapPin, Phone, Briefcase, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
 import type { Profile } from "@/hooks/useProfile";
+import WhatsAppVerification from "@/components/WhatsAppVerification";
 
 interface Props {
   profile: Profile | null;
