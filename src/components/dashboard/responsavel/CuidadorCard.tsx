@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
-type Profile = Tables<"profiles">;
+type Profile = Tables<"profiles"> & { banner_url?: string | null };
 
 export interface CuidadorComment {
   id: string;
