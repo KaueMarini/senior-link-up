@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { telefone, mensagem, tipo } = await req.json();
+    const { telefone, mensagem, tipo, email } = await req.json();
 
     if (!telefone || !mensagem) {
       return new Response(
@@ -29,6 +29,7 @@ serve(async (req) => {
         telefone,
         mensagem,
         tipo: tipo || "geral",
+        email: email || null,
         timestamp: new Date().toISOString(),
       }),
     });

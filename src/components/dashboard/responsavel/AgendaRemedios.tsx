@@ -112,7 +112,7 @@ const AgendaRemedios = () => {
         dosagem: form.dosagem || "",
         frequencia: frequenciaLabel,
         horarios: form.horarios.filter(Boolean).join(", "),
-      }, profile.telefone);
+      }, profile.telefone, user?.email || undefined);
     }
 
     setShowDialog(false);

@@ -30,7 +30,8 @@ const buildMessage = (tipo: NotificationType, detalhes: Record<string, string>):
 export const sendNotification = async (
   tipo: NotificationType,
   detalhes: Record<string, string>,
-  telefone: string
+  telefone: string,
+  email?: string
 ) => {
   if (!telefone) {
     console.warn("Notificação não enviada: telefone não cadastrado");
@@ -41,7 +42,7 @@ export const sendNotification = async (
 
   try {
     const { data, error } = await supabase.functions.invoke("notify-webhook", {
-      body: { telefone, mensagem, tipo },
+      body: { telefone, mensagem, tipo, email: email || null },
     });
 
     if (error) {
