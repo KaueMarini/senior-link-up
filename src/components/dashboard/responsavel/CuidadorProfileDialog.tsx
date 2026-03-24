@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import {
   MapPin, Briefcase, Heart, BadgeCheck, MessageCircle,
   Clock, GraduationCap, DollarSign, Phone, User, FileText,
-  ThumbsUp, MessageSquare, Send,
+  ThumbsUp, MessageSquare, Send, Award, CheckCircle2, ExternalLink,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import type { CuidadorComment } from "./CuidadorCard";
 import { format } from "date-fns";
