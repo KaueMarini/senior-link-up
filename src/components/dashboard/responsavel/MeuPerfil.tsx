@@ -7,6 +7,7 @@ import { Camera, Save, User, Phone, MapPin, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useRef } from "react";
 import type { Profile } from "@/hooks/useProfile";
+import WhatsAppVerification from "@/components/WhatsAppVerification";
 
 interface Props {
   profile: Profile | null;
