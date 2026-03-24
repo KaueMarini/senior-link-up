@@ -193,6 +193,49 @@ const CuidadorProfileDialog = ({
             </div>
           )}
 
+          {/* Certificates section */}
+          {certificates.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Award className="h-4 w-4 text-primary" />
+                <h4 className="font-heading font-bold text-sm text-foreground uppercase tracking-wide">
+                  Certificados ({certificates.length})
+                </h4>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {certificates.map((cert: any) => (
+                  <div key={cert.id} className="flex items-start gap-3 bg-muted/20 rounded-xl p-3 border border-border/30">
+                    <div className="shrink-0 mt-0.5 h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <FileText className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-foreground truncate">{cert.nome}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {cert.instituicao || "—"} • {cert.data_conclusao || "—"}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        {cert.verificado ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-primary">
+                            <CheckCircle2 className="h-3 w-3" /> Verificado
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                            <Clock className="h-3 w-3" /> Pendente
+                          </span>
+                        )}
+                        {cert.arquivo_url && (
+                          <a href={cert.arquivo_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 text-[11px] text-primary hover:underline">
+                            <ExternalLink className="h-3 w-3" /> Ver
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Comments section */}
           <div>
             <div className="flex items-center gap-2 mb-3">
