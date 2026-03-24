@@ -103,7 +103,7 @@ const AgendaInteligente = () => {
         tipo: tipoLabel,
         data_hora: dataHora.toLocaleString("pt-BR"),
         descricao: form.descricao || "",
-      }, telefone);
+      }, telefone, user?.email || undefined);
     } else {
       console.warn("Webhook não enviado: telefone não cadastrado no perfil");
     }

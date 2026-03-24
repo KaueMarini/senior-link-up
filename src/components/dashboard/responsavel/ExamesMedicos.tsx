@@ -69,7 +69,7 @@ const ExamesMedicos = () => {
         nome: form.nome,
         data: form.data_exame ? new Date(form.data_exame).toLocaleDateString("pt-BR") : "",
         descricao: form.descricao || "",
-      }, profile.telefone);
+      }, profile.telefone, user?.email || undefined);
     }
 
     setShowDialog(false);
