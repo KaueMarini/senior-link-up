@@ -257,8 +257,8 @@ const BuscarCuidadores = () => {
                     <Heart className={`h-4 w-4 ${favorites.has(selectedCuidador.id) ? "fill-accent" : ""}`} />
                     {favorites.has(selectedCuidador.id) ? "Favoritado" : "Favoritar"}
                   </Button>
-                  <Button variant="outline" className="flex-1 gap-2" onClick={() => { setMsgTarget(selectedCuidador); setMensagem(reviews[selectedCuidador.id]?.mensagem || ""); setShowMsgDialog(true); setSelectedCuidador(null); }}>
-                    <MessageSquare className="h-4 w-4" /> Mensagem
+                  <Button variant="outline" className="flex-1 gap-2" onClick={() => { startChat(selectedCuidador.user_id); setSelectedCuidador(null); }}>
+                    <MessageCircle className="h-4 w-4" /> Iniciar Chat
                   </Button>
                 </div>
               </div>
