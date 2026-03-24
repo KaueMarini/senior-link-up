@@ -62,32 +62,30 @@ const CuidadorFields = ({ data, onChange }: CuidadorFieldsProps) => {
         Preencha seus dados profissionais para que famílias possam encontrar você.
       </p>
 
-      {/* Documentos */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="cpf" className="flex items-center gap-1.5 text-base">
-            <FileText className="h-4 w-4" /> CPF
-          </Label>
-          <Input
-            id="cpf"
-            placeholder="000.000.000-00"
-            value={data.cpf}
-            onChange={(e) => update("cpf", e.target.value)}
-            required
-            className="h-12 text-base"
-            maxLength={14}
-          />
-        </div>
-        <div className="space-y-2">
-          <WhatsAppVerification
-            telefone={data.telefone}
-            onTelefoneChange={(v) => update("telefone", v)}
-            verified={data.telefoneVerificado}
-            onVerified={(v) => update("telefoneVerificado", v)}
-            required
-          />
-        </div>
+      {/* CPF */}
+      <div className="space-y-2">
+        <Label htmlFor="cpf" className="flex items-center gap-1.5 text-base">
+          <FileText className="h-4 w-4" /> CPF
+        </Label>
+        <Input
+          id="cpf"
+          placeholder="000.000.000-00"
+          value={data.cpf}
+          onChange={(e) => update("cpf", e.target.value)}
+          required
+          className="h-12 text-base"
+          maxLength={14}
+        />
       </div>
+
+      {/* WhatsApp - full width */}
+      <WhatsAppVerification
+        telefone={data.telefone}
+        onTelefoneChange={(v) => update("telefone", v)}
+        verified={data.telefoneVerificado}
+        onVerified={(v) => update("telefoneVerificado", v)}
+        required
+      />
 
       {/* Localização */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
