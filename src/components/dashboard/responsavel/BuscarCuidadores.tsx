@@ -194,6 +194,9 @@ const BuscarCuidadores = () => {
                 <Button variant="outline" size="sm" onClick={() => { setMsgTarget(c); setMensagem(reviews[c.id]?.mensagem || ""); setShowMsgDialog(true); }}>
                   <MessageSquare className="h-4 w-4" />
                 </Button>
+                <Button variant="outline" size="sm" onClick={() => startChat(c.user_id)} className="gap-1 text-primary border-primary">
+                  <MessageCircle className="h-4 w-4" /> Chat
+                </Button>
                 <Button size="sm" className="ml-auto" onClick={() => setSelectedCuidador(c)}>
                   Ver perfil
                 </Button>
