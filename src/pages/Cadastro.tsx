@@ -22,7 +22,7 @@ const passwordRules = [
 ];
 
 const emptyCuidadorData: CuidadorData = {
-  cpf: "", telefone: "", cidade: "", estado: "", especialidade: "",
+  cpf: "", telefone: "", telefoneVerificado: false, cidade: "", estado: "", especialidade: "",
   anosExperiencia: "", formacao: "", sobre: "", disponibilidade: "", aceitaTermos: false,
 };
 
@@ -58,6 +58,10 @@ const Cadastro = () => {
     if (isCuidador) {
       if (!cuidadorData.cpf || !cuidadorData.telefone || !cuidadorData.cidade || !cuidadorData.estado || !cuidadorData.especialidade || !cuidadorData.anosExperiencia || !cuidadorData.disponibilidade) {
         toast({ title: "Dados incompletos", description: "Preencha todos os campos obrigatórios do perfil profissional.", variant: "destructive" });
+        return;
+      }
+      if (!cuidadorData.telefoneVerificado) {
+        toast({ title: "WhatsApp não verificado", description: "Verifique seu número de WhatsApp antes de continuar.", variant: "destructive" });
         return;
       }
       if (!cuidadorData.aceitaTermos) {

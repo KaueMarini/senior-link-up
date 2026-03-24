@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, Save, MapPin, Phone, Briefcase, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
 import type { Profile } from "@/hooks/useProfile";
+import WhatsAppVerification from "@/components/WhatsAppVerification";
 
 interface Props {
   profile: Profile | null;
@@ -17,6 +18,7 @@ interface Props {
 const CuidadorPerfil = ({ profile, onUpdate, onUploadAvatar }: Props) => {
   const fileRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
+  const [telefoneVerificado, setTelefoneVerificado] = useState(!!profile?.telefone);
   const [form, setForm] = useState({
     nome: profile?.nome || "",
     telefone: profile?.telefone || "",
@@ -34,6 +36,10 @@ const CuidadorPerfil = ({ profile, onUpdate, onUploadAvatar }: Props) => {
   };
 
   const handleSave = async () => {
+    if (form.telefone && !telefoneVerificado) {
+      toast.error("Verifique seu WhatsApp antes de salvar");
+      return;
+    }
     setSaving(true);
     const { error } = await onUpdate(form);
     setSaving(false);
@@ -122,9 +128,13 @@ const CuidadorPerfil = ({ profile, onUpdate, onUploadAvatar }: Props) => {
               <label className="text-sm font-medium text-foreground">Nome completo</label>
               <Input value={form.nome} onChange={(e) => handleChange("nome", e.target.value)} />
             </div>
-            <div>
-              <label className="text-sm font-medium text-foreground">Telefone</label>
-              <Input value={form.telefone} onChange={(e) => handleChange("telefone", e.target.value)} />
+            <div className="sm:col-span-2">
+              <WhatsAppVerification
+                telefone={form.telefone}
+                onTelefoneChange={(v) => handleChange("telefone", v)}
+                verified={telefoneVerificado}
+                onVerified={setTelefoneVerificado}
+              />
             </div>
             <div>
               <label className="text-sm font-medium text-foreground">Cidade</label>
