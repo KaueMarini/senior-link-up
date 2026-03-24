@@ -62,6 +62,7 @@ const CuidadorDashboard = () => {
               profile={profile}
               onUpdate={updateProfile}
               onUploadAvatar={uploadAvatar}
+              onUploadBanner={uploadBanner}
             />
           </TabsContent>
 
