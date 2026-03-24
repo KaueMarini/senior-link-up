@@ -49,6 +49,17 @@ const CuidadorProfileDialog = ({
   onAddComment,
 }: CuidadorProfileDialogProps) => {
   const [newComment, setNewComment] = useState("");
+  const [certificates, setCertificates] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!cuidador || !open) return;
+    supabase
+      .from("certificates")
+      .select("*")
+      .eq("user_id", cuidador.user_id)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setCertificates(data || []));
+  }, [cuidador, open]);
 
   if (!cuidador) return null;
   const initials = (cuidador.nome || "C").slice(0, 2).toUpperCase();
