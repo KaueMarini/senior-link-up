@@ -14,7 +14,7 @@ import type { CuidadorComment } from "./CuidadorCard";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-type Profile = Tables<"profiles">;
+type Profile = Tables<"profiles"> & { banner_url?: string | null };
 
 interface CuidadorProfileDialogProps {
   cuidador: Profile | null;
