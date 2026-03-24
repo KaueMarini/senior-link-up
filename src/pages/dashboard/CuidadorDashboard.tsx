@@ -65,6 +65,10 @@ const CuidadorDashboard = () => {
             />
           </TabsContent>
 
+          <TabsContent value="chat">
+            <ChatTab />
+          </TabsContent>
+
           <TabsContent value="videos">
             <CuidadorVideos />
           </TabsContent>

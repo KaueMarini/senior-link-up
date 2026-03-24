@@ -75,6 +75,9 @@ const ResponsavelDashboard = () => {
           <TabsContent value="cuidadores">
             <BuscarCuidadores />
           </TabsContent>
+          <TabsContent value="chat">
+            <ChatTab />
+          </TabsContent>
           <TabsContent value="favoritos">
             <MeusFavoritos />
           </TabsContent>
