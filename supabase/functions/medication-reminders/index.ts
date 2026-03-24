@@ -60,6 +60,7 @@ serve(async (_req) => {
             telefone,
             mensagem,
             tipo: "lembrete_remedio",
+            email: authUser?.email || null,
             timestamp: now.toISOString(),
           }),
         });
