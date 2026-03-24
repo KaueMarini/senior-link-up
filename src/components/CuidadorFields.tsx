@@ -15,6 +15,7 @@ import WhatsAppVerification from "@/components/WhatsAppVerification";
 export interface CuidadorData {
   cpf: string;
   telefone: string;
+  telefoneVerificado: boolean;
   cidade: string;
   estado: string;
   especialidade: string;
