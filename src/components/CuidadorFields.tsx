@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FileText, Briefcase, MapPin } from "lucide-react";
+import WhatsAppVerification from "@/components/WhatsAppVerification";
 
 export interface CuidadorData {
   cpf: string;
