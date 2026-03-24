@@ -19,6 +19,7 @@ interface Props {
 const MeuPerfil = ({ profile, onUpdate, onUploadAvatar, userEmail }: Props) => {
   const fileRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
+  const [telefoneVerificado, setTelefoneVerificado] = useState(!!profile?.telefone);
   const [form, setForm] = useState({
     nome: profile?.nome || "",
     telefone: profile?.telefone || "",
