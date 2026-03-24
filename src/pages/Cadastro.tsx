@@ -60,6 +60,10 @@ const Cadastro = () => {
         toast({ title: "Dados incompletos", description: "Preencha todos os campos obrigatórios do perfil profissional.", variant: "destructive" });
         return;
       }
+      if (!cuidadorData.telefoneVerificado) {
+        toast({ title: "WhatsApp não verificado", description: "Verifique seu número de WhatsApp antes de continuar.", variant: "destructive" });
+        return;
+      }
       if (!cuidadorData.aceitaTermos) {
         toast({ title: "Termos obrigatórios", description: "Você precisa aceitar a declaração de veracidade dos dados.", variant: "destructive" });
         return;

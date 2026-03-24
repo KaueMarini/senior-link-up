@@ -79,15 +79,12 @@ const CuidadorFields = ({ data, onChange }: CuidadorFieldsProps) => {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="telefone" className="text-base">Telefone / WhatsApp</Label>
-          <Input
-            id="telefone"
-            placeholder="(00) 00000-0000"
-            value={data.telefone}
-            onChange={(e) => update("telefone", e.target.value)}
+          <WhatsAppVerification
+            telefone={data.telefone}
+            onTelefoneChange={(v) => update("telefone", v)}
+            verified={data.telefoneVerificado}
+            onVerified={(v) => update("telefoneVerificado", v)}
             required
-            className="h-12 text-base"
-            maxLength={15}
           />
         </div>
       </div>

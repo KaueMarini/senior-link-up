@@ -128,9 +128,13 @@ const CuidadorPerfil = ({ profile, onUpdate, onUploadAvatar }: Props) => {
               <label className="text-sm font-medium text-foreground">Nome completo</label>
               <Input value={form.nome} onChange={(e) => handleChange("nome", e.target.value)} />
             </div>
-            <div>
-              <label className="text-sm font-medium text-foreground">Telefone</label>
-              <Input value={form.telefone} onChange={(e) => handleChange("telefone", e.target.value)} />
+            <div className="sm:col-span-2">
+              <WhatsAppVerification
+                telefone={form.telefone}
+                onTelefoneChange={(v) => handleChange("telefone", v)}
+                verified={telefoneVerificado}
+                onVerified={setTelefoneVerificado}
+              />
             </div>
             <div>
               <label className="text-sm font-medium text-foreground">Cidade</label>

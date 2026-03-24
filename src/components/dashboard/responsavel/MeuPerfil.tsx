@@ -117,17 +117,13 @@ const MeuPerfil = ({ profile, onUpdate, onUploadAvatar, userEmail }: Props) => {
               <label className="text-sm font-medium text-foreground">Nome completo</label>
               <Input value={form.nome} onChange={(e) => handleChange("nome", e.target.value)} />
             </div>
-            <div>
-              <label className="text-sm font-medium text-foreground">
-                Telefone / WhatsApp
-                {!profile?.telefone && (
-                  <span className="ml-1 text-xs text-destructive">(obrigatório para notificações)</span>
-                )}
-              </label>
-              <Input
-                value={form.telefone}
-                onChange={(e) => handleChange("telefone", e.target.value)}
-                placeholder="(11) 99999-9999"
+            <div className="sm:col-span-2">
+              <WhatsAppVerification
+                telefone={form.telefone}
+                onTelefoneChange={(v) => handleChange("telefone", v)}
+                verified={telefoneVerificado}
+                onVerified={setTelefoneVerificado}
+                required={!profile?.telefone}
               />
             </div>
             <div>
