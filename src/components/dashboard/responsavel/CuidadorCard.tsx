@@ -96,14 +96,31 @@ const CuidadorCard = ({
           </div>
         )}
 
-        {/* Like count overlay */}
-        <div className="absolute bottom-3 left-3 flex items-center gap-1.5">
-          <div className="flex items-center gap-1 bg-card/85 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-sm">
-            <ThumbsUp className="h-3.5 w-3.5 text-primary" />
-            <span className="text-xs font-bold text-foreground">{likeCount}</span>
-            <span className="text-[10px] text-muted-foreground">curtida{likeCount !== 1 ? "s" : ""}</span>
+        {/* Avatar overlay when banner exists */}
+        {(c as any).banner_url && (
+          <div className="absolute bottom-3 left-3 flex items-center gap-2">
+            <Avatar className="h-10 w-10 border-2 border-card shadow-md">
+              <AvatarImage src={c.avatar_url || ""} className="object-cover" />
+              <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">{initials}</AvatarFallback>
+            </Avatar>
+            <div className="flex items-center gap-1 bg-card/85 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-sm">
+              <ThumbsUp className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-bold text-foreground">{likeCount}</span>
+              <span className="text-[10px] text-muted-foreground">curtida{likeCount !== 1 ? "s" : ""}</span>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Like count when no banner */}
+        {!(c as any).banner_url && (
+          <div className="absolute bottom-3 left-3 flex items-center gap-1.5">
+            <div className="flex items-center gap-1 bg-card/85 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-sm">
+              <ThumbsUp className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-bold text-foreground">{likeCount}</span>
+              <span className="text-[10px] text-muted-foreground">curtida{likeCount !== 1 ? "s" : ""}</span>
+            </div>
+          </div>
+        )}
 
         {/* Price overlay */}
         {c.preco_diaria && (
