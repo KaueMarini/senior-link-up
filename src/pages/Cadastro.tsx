@@ -22,7 +22,7 @@ const passwordRules = [
 ];
 
 const emptyCuidadorData: CuidadorData = {
-  cpf: "", telefone: "", cidade: "", estado: "", especialidade: "",
+  cpf: "", telefone: "", telefoneVerificado: false, cidade: "", estado: "", especialidade: "",
   anosExperiencia: "", formacao: "", sobre: "", disponibilidade: "", aceitaTermos: false,
 };
 
