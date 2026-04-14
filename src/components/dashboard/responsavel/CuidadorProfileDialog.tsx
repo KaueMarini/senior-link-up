@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import {
   MapPin, Briefcase, Heart, BadgeCheck, MessageCircle,
   Clock, GraduationCap, DollarSign, Phone, User, FileText,
-  ThumbsUp, MessageSquare, Send, Award, CheckCircle2, ExternalLink,
+  ThumbsUp, MessageSquare, Send, Award, CheckCircle2, ExternalLink, Link2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -24,6 +24,7 @@ interface CuidadorProfileDialogProps {
   isFavorite: boolean;
   onToggleFavorite: () => void;
   onStartChat: () => void;
+  onVincular?: () => void;
   likeCount: number;
   comments: CuidadorComment[];
   onAddComment: (msg: string) => void;
@@ -44,6 +45,7 @@ const CuidadorProfileDialog = ({
   isFavorite,
   onToggleFavorite,
   onStartChat,
+  onVincular,
   likeCount,
   comments,
   onAddComment,
@@ -288,21 +290,34 @@ const CuidadorProfileDialog = ({
         </div>
 
         {/* Footer actions */}
-        <div className="border-t px-6 py-4 flex gap-3 bg-muted/10">
-          <Button
-            variant="outline"
-            className="flex-1 gap-2 h-11 rounded-xl"
-            onClick={onToggleFavorite}
-          >
-            <Heart className={`h-4 w-4 transition-all ${isFavorite ? "fill-accent text-accent" : ""}`} />
-            {isFavorite ? "Favoritado" : "Favoritar"}
-          </Button>
-          <Button
-            className="flex-1 gap-2 h-11 rounded-xl shadow-md"
-            onClick={() => { onStartChat(); onClose(); }}
-          >
-            <MessageCircle className="h-4 w-4" /> Iniciar Negociação
-          </Button>
+        <div className="border-t px-6 py-4 bg-muted/10 space-y-2">
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              className="flex-1 gap-2 h-10 rounded-xl"
+              onClick={onToggleFavorite}
+            >
+              <Heart
+                className={`h-4 w-4 transition-all ${isFavorite ? "fill-accent text-accent" : ""}`}
+              />
+              {isFavorite ? "Favoritado" : "Favoritar"}
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1 gap-2 h-10 rounded-xl"
+              onClick={() => { onStartChat(); onClose(); }}
+            >
+              <MessageCircle className="h-4 w-4" /> Chat
+            </Button>
+          </div>
+          {onVincular && (
+            <Button
+              className="w-full gap-2 h-11 rounded-xl shadow-md"
+              onClick={() => { onVincular(); onClose(); }}
+            >
+              <Link2 className="h-4 w-4" /> Vincular a um Idoso
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

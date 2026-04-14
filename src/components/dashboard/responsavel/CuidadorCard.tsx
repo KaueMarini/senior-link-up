@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   MapPin, Briefcase, Heart, ThumbsUp, ThumbsDown,
-  BadgeCheck, MessageCircle, Clock, GraduationCap, DollarSign, Star, MessageSquare,
+  BadgeCheck, MessageCircle, Clock, GraduationCap, DollarSign, Star, MessageSquare, Link2,
 } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -29,6 +29,7 @@ interface CuidadorCardProps {
   onDislike: () => void;
   onStartChat: () => void;
   onViewProfile: () => void;
+  onVincular?: () => void;
 }
 
 const disponibilidadeLabel: Record<string, string> = {
@@ -50,6 +51,7 @@ const CuidadorCard = ({
   onDislike,
   onStartChat,
   onViewProfile,
+  onVincular,
 }: CuidadorCardProps) => {
   const initials = (c.nome || "C").slice(0, 2).toUpperCase();
 
@@ -221,11 +223,22 @@ const CuidadorCard = ({
           >
             <ThumbsDown className="h-4 w-4" />
           </Button>
+          {onVincular && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onVincular}
+              className="h-9 gap-1.5 rounded-full text-primary hover:bg-primary/10 ml-auto"
+              title="Vincular a um idoso"
+            >
+              <Link2 className="h-4 w-4" /> Vincular
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"
             onClick={onStartChat}
-            className="h-9 gap-1.5 rounded-full text-primary hover:bg-primary/10 ml-auto"
+            className={`h-9 gap-1.5 rounded-full text-primary hover:bg-primary/10 ${!onVincular ? "ml-auto" : ""}`}
           >
             <MessageCircle className="h-4 w-4" /> Chat
           </Button>

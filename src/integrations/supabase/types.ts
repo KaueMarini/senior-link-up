@@ -96,6 +96,81 @@ export type Database = {
           },
         ]
       }
+      dependentes: {
+        Row: {
+          id: string
+          responsavel_id: string
+          nome: string
+          data_nascimento: string | null
+          diagnosticos: string[] | null
+          nivel_dependencia: string | null
+          medicamentos_ativos: string | null
+          observacoes: string | null
+          avatar_url: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          responsavel_id: string
+          nome: string
+          data_nascimento?: string | null
+          diagnosticos?: string[] | null
+          nivel_dependencia?: string | null
+          medicamentos_ativos?: string | null
+          observacoes?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          responsavel_id?: string
+          nome?: string
+          data_nascimento?: string | null
+          diagnosticos?: string[] | null
+          nivel_dependencia?: string | null
+          medicamentos_ativos?: string | null
+          observacoes?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      vinculos: {
+        Row: {
+          id: string
+          responsavel_id: string
+          dependente_id: string
+          cuidador_profile_id: string
+          status: string
+          proposta_texto: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          responsavel_id: string
+          dependente_id: string
+          cuidador_profile_id: string
+          status?: string
+          proposta_texto?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          responsavel_id?: string
+          dependente_id?: string
+          cuidador_profile_id?: string
+          status?: string
+          proposta_texto?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       certificates: {
         Row: {
           arquivo_url: string | null

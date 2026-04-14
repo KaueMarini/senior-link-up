@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import Header from "@/components/Header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Heart, Calendar, FileText, Pill, User, MessageSquare } from "lucide-react";
+import { Users, Heart, Calendar, FileText, Pill, User, MessageSquare, UserCheck } from "lucide-react";
 import BuscarCuidadores from "@/components/dashboard/responsavel/BuscarCuidadores";
 import MeusFavoritos from "@/components/dashboard/responsavel/MeusFavoritos";
 import ChatTab from "@/components/chat/ChatTab";
@@ -10,6 +10,7 @@ import AgendaInteligente from "@/components/dashboard/responsavel/AgendaIntelige
 import ExamesMedicos from "@/components/dashboard/responsavel/ExamesMedicos";
 import AgendaRemedios from "@/components/dashboard/responsavel/AgendaRemedios";
 import MeuPerfil from "@/components/dashboard/responsavel/MeuPerfil";
+import GerenciarDependentes from "@/components/dashboard/responsavel/GerenciarDependentes";
 
 const ResponsavelDashboard = () => {
   const { userName, user } = useAuth();
@@ -40,9 +41,12 @@ const ResponsavelDashboard = () => {
         </div>
 
         <Tabs defaultValue="perfil" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-8 lg:w-auto lg:inline-grid">
             <TabsTrigger value="perfil" className="gap-2">
               <User className="h-4 w-4" /> Perfil
+            </TabsTrigger>
+            <TabsTrigger value="dependentes" className="gap-2">
+              <UserCheck className="h-4 w-4" /> Dependentes
             </TabsTrigger>
             <TabsTrigger value="cuidadores" className="gap-2">
               <Users className="h-4 w-4" /> Cuidadores
@@ -71,6 +75,9 @@ const ResponsavelDashboard = () => {
               onUploadAvatar={uploadAvatar}
               userEmail={user?.email || ""}
             />
+          </TabsContent>
+          <TabsContent value="dependentes">
+            <GerenciarDependentes />
           </TabsContent>
           <TabsContent value="cuidadores">
             <BuscarCuidadores />
