@@ -31,6 +31,30 @@ interface ChatWindowProps {
 }
 
 // ─────────────────────────────────────────────
+// Stage badge helpers
+// ─────────────────────────────────────────────
+
+const STAGE_LABEL: Record<string, string> = {
+  inicio:     "Início",
+  negociacao: "Negociação",
+  acordo:     "Acordo",
+  finalizado: "Fechado",
+};
+
+const STAGE_VARIANT: Record<string, string> = {
+  inicio:     "bg-slate-100 text-slate-600",
+  negociacao: "bg-blue-100 text-blue-700",
+  acordo:     "bg-amber-100 text-amber-700",
+  finalizado: "bg-green-100 text-green-700",
+};
+
+const SENTIMENT_DOT: Record<string, string> = {
+  positivo: "bg-green-500",
+  neutro:   "bg-slate-400",
+  tenso:    "bg-red-500",
+};
+
+// ─────────────────────────────────────────────
 // Component
 // ─────────────────────────────────────────────
 
@@ -39,7 +63,7 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
   const myRole: "cuidador" | "responsavel" =
     userPerfil === "cuidador" ? "cuidador" : "responsavel";
 
-  // ── Core chat state (unchanged from original) ──
+  // ── Core chat state ──
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -50,15 +74,19 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
   const [showPanel, setShowPanel] = useState(true);
   const [showCards, setShowCards] = useState(false);
 
-  // ── AI layer ──
-  const { contractDraft, smartReplies, completionScore } = useChatAI(
-    messages,
-    user?.id ?? "",
-    myRole
-  );
+  // ── AI layer — all fields ──
+  const {
+    contractDraft,
+    smartReplies,
+    completionScore,
+    loading: aiLoading,
+    conversationStage,
+    sentiment,
+    discussedTopics,
+  } = useChatAI(messages, user?.id ?? "", myRole);
 
   // ─────────────────────────────────────────────
-  // Realtime subscription — NOT modified
+  // Realtime subscription
   // ─────────────────────────────────────────────
 
   useEffect(() => {
@@ -136,7 +164,6 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
     }
   };
 
-  /** Fills the input with a smart-reply suggestion and focuses it. */
   const handleSmartReplySelect = (text: string) => {
     setNewMessage(text);
     inputRef.current?.focus();
@@ -169,9 +196,20 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
               <h3 className="font-heading font-bold text-foreground truncate">
                 {otherUser.nome}
               </h3>
-              <p className="text-xs text-muted-foreground">
-                Negociação em andamento
-              </p>
+              {/* Stage + sentiment inline */}
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span
+                  className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full leading-none ${STAGE_VARIANT[conversationStage] ?? STAGE_VARIANT.inicio}`}
+                >
+                  {STAGE_LABEL[conversationStage] ?? conversationStage}
+                </span>
+                <span
+                  className={`h-1.5 w-1.5 rounded-full shrink-0 ${SENTIMENT_DOT[sentiment] ?? SENTIMENT_DOT.neutro}`}
+                />
+                <span className="text-[10px] text-muted-foreground capitalize">
+                  {sentiment}
+                </span>
+              </div>
             </div>
 
             {/* Draft progress pill (visible when panel is hidden) */}
@@ -256,10 +294,11 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
             <div ref={bottomRef} />
           </div>
 
-          {/* Smart Replies */}
+          {/* Smart Replies — passes loading state */}
           <SmartReplies
             suggestions={smartReplies}
             onSelect={handleSmartReplySelect}
+            loading={aiLoading}
           />
 
           {/* Input area */}
@@ -284,13 +323,16 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
           </div>
         </Card>
 
-        {/* ── Contract draft panel ── */}
+        {/* ── Contract draft panel — receives all AI fields ── */}
         {showPanel && (
           <ContractDraftPanel
             draft={contractDraft}
             completionScore={completionScore}
             otherUserName={otherUser.nome}
             myName={userName}
+            conversationStage={conversationStage}
+            sentiment={sentiment}
+            discussedTopics={discussedTopics}
             className="h-[600px]"
           />
         )}

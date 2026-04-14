@@ -11,6 +11,8 @@ import {
   ListTodo,
   Shield,
   Calendar,
+  MessageSquare,
+  TrendingUp,
 } from "lucide-react";
 import type { ContractDraft } from "@/hooks/useChatAI";
 
@@ -103,6 +105,36 @@ function openContractPDF(
 }
 
 // ─────────────────────────────────────────────
+// Stage / Sentiment helpers
+// ─────────────────────────────────────────────
+
+const STAGE_LABEL: Record<string, string> = {
+  inicio:      "Início",
+  negociacao:  "Negociação",
+  acordo:      "Acordo",
+  finalizado:  "Fechado",
+};
+
+const STAGE_CLASS: Record<string, string> = {
+  inicio:     "bg-slate-100 text-slate-600",
+  negociacao: "bg-blue-100 text-blue-700",
+  acordo:     "bg-amber-100 text-amber-700",
+  finalizado: "bg-green-100 text-green-700",
+};
+
+const SENTIMENT_DOT: Record<string, string> = {
+  positivo: "bg-green-500",
+  neutro:   "bg-slate-400",
+  tenso:    "bg-red-500",
+};
+
+const SENTIMENT_LABEL: Record<string, string> = {
+  positivo: "Tom positivo",
+  neutro:   "Tom neutro",
+  tenso:    "Tom tenso",
+};
+
+// ─────────────────────────────────────────────
 // Component
 // ─────────────────────────────────────────────
 
@@ -113,6 +145,9 @@ interface ContractDraftPanelProps {
   completionScore: number;
   otherUserName: string;
   myName: string;
+  conversationStage?: string;
+  sentiment?: string;
+  discussedTopics?: string[];
   className?: string;
 }
 
@@ -121,6 +156,9 @@ const ContractDraftPanel = ({
   completionScore,
   otherUserName,
   myName,
+  conversationStage = "inicio",
+  sentiment = "neutro",
+  discussedTopics = [],
   className = "",
 }: ContractDraftPanelProps) => {
   const isReady = completionScore >= 50;
@@ -133,6 +171,24 @@ const ContractDraftPanel = ({
           <FileText className="h-4 w-4 text-primary" />
           Draft de Contrato
         </CardTitle>
+
+        {/* Stage + Sentiment row */}
+        <div className="flex items-center gap-2 mt-1.5">
+          <span
+            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${STAGE_CLASS[conversationStage] ?? STAGE_CLASS.inicio}`}
+          >
+            {STAGE_LABEL[conversationStage] ?? conversationStage}
+          </span>
+          <div className="flex items-center gap-1 ml-auto">
+            <span
+              className={`h-2 w-2 rounded-full shrink-0 ${SENTIMENT_DOT[sentiment] ?? SENTIMENT_DOT.neutro}`}
+            />
+            <span className="text-[10px] text-muted-foreground">
+              {SENTIMENT_LABEL[sentiment] ?? sentiment}
+            </span>
+          </div>
+        </div>
+
         {/* Progress bar */}
         <div className="flex items-center gap-2 mt-2">
           <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
@@ -206,6 +262,32 @@ const ContractDraftPanel = ({
                 {draft.regras.map((r) => (
                   <Badge key={r} variant="outline" className="text-[11px] font-normal">
                     {r}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Tópicos discutidos */}
+        {discussedTopics.length > 0 && (
+          <>
+            <Separator />
+            <div>
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+                  Tópicos Discutidos
+                </span>
+                <TrendingUp className="h-3 w-3 text-green-500 ml-auto" />
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {discussedTopics.map((t) => (
+                  <Badge
+                    key={t}
+                    className="text-[10px] font-normal bg-primary/10 text-primary border-0 hover:bg-primary/20"
+                  >
+                    {t}
                   </Badge>
                 ))}
               </div>

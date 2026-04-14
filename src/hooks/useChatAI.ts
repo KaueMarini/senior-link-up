@@ -1,4 +1,9 @@
-import { useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
+import { GoogleGenerativeAI, SchemaType, type Schema } from "@google/generative-ai";
+
+// ─────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────
 
 export interface Message {
   id: string;
@@ -16,143 +21,208 @@ export interface ContractDraft {
   regras: string[];
 }
 
-// ─────────────────────────────────────────────
-// Extraction helpers (pattern-based, zero-cost)
-// Swap extractContractData for an LLM call later
-// by replacing the body and keeping the signature.
-// ─────────────────────────────────────────────
-
-function extractContractData(messages: Message[]): ContractDraft {
-  const text = messages.map((m) => m.content).join("\n");
-
-  // Monetary value  —  R$ 80, 80/hora, cobro 80 reais, valor de 80
-  const valorPatterns = [
-    /R\$\s*([\d.,]+)(?:\s*(?:\/h(?:ora)?|por hora|a hora))?/i,
-    /([\d.,]+)\s*(?:reais\s+por\s+hora|por\s+hora|\/hora|\/h\b)/i,
-    /(?:cobro|cobre|valor\s+(?:é|de|por))\s+R?\$?\s*([\d.,]+)/i,
-  ];
-  let valorAcordado: string | undefined;
-  for (const p of valorPatterns) {
-    const m = text.match(p);
-    if (m) { valorAcordado = `R$ ${m[1]}/hora`; break; }
-  }
-
-  // Work schedule  —  das 07h às 13h, 8h às 16h, turno da manhã
-  const horarioPatterns = [
-    /(?:das?\s+)?(\d{1,2}h?\d{0,2})\s+(?:às?|ao?|até|-)\s+(\d{1,2}h?\d{0,2})/i,
-    /(\d{1,2}:\d{2})\s+(?:às?|ao?|-)\s+(\d{1,2}:\d{2})/i,
-    /turno\s+(?:da\s+)?(manhã|tarde|noite)/i,
-  ];
-  let horarios: string | undefined;
-  for (const p of horarioPatterns) {
-    const m = text.match(p);
-    if (m) {
-      horarios = m[3] ? `Turno da ${m[3]}` : `${m[1]} às ${m[2]}`;
-      break;
-    }
-  }
-
-  // Work period  —  segunda a sexta, 3 dias por semana
-  const periodoPatterns = [
-    /(segunda(?:\s+a\s+|\s+ao?\s+)\w+)/i,
-    /(\d+)\s*dias?\s*por\s*semana/i,
-    /(dias?\s+úteis|fins?\s+de\s+semana|seg\s+a\s+sex)/i,
-  ];
-  let periodo: string | undefined;
-  for (const p of periodoPatterns) {
-    const m = text.match(p);
-    if (m) { periodo = m[1]; break; }
-  }
-
-  // Tasks
-  const tarefasMap = [
-    { re: /banho|higiene pessoal/i,                    label: "Higiene pessoal e banho" },
-    { re: /medicament/i,                               label: "Administração de medicamentos" },
-    { re: /fisioterapia|exerc[ií]cio/i,                label: "Exercícios e fisioterapia" },
-    { re: /aliment|refeição|refeicao|cozinhar|alimentar/i, label: "Alimentação e refeições" },
-    { re: /companhia|companh/i,                        label: "Companhia e apoio emocional" },
-    { re: /consulta|médico|medico|hospital/i,           label: "Acompanhamento a consultas" },
-    { re: /limpeza|arrum|organização/i,                label: "Organização do ambiente" },
-    { re: /fralda/i,                                   label: "Troca de fraldas" },
-  ];
-  const tarefas = tarefasMap.filter((k) => k.re.test(text)).map((k) => k.label);
-
-  // House rules / restrictions
-  const regrasMap = [
-    { re: /não fum|nao fum|sem fumant/i,              label: "Não fumante" },
-    { re: /sem pet|não tem animal|alergi[ac] a/i,     label: "Sem animais de estimação" },
-    { re: /pontualidade|pontual|horário fixo/i,        label: "Pontualidade exigida" },
-    { re: /sigilo|privacidade|confidencial/i,          label: "Sigilo e privacidade" },
-  ];
-  const regras = regrasMap.filter((k) => k.re.test(text)).map((k) => k.label);
-
-  return { valorAcordado, horarios, periodo, tarefas, regras };
+interface GeminiAnalysis {
+  contractDraft: ContractDraft;
+  smartReplies: string[];
+  discussedTopics: string[];
+  conversationStage: "inicio" | "negociacao" | "acordo" | "finalizado";
+  sentiment: "positivo" | "neutro" | "tenso";
 }
 
 // ─────────────────────────────────────────────
-// Topic detection
+// Gemini client (singleton)
 // ─────────────────────────────────────────────
 
-function getDiscussedTopics(messages: Message[]): Set<string> {
-  const text = messages.map((m) => m.content).join(" ");
-  const add = (key: string, re: RegExp) => re.test(text) && topics.add(key);
-  const topics = new Set<string>();
-  add("valor",         /R\$|valor|preço|preco|cobro|cobrar|honorário/i);
-  add("disponibilidade", /disponív|horário|horario|dias|semana|turno|manhã|tarde|noite/i);
-  add("referencias",   /referên|referencia|experiên|trabalhou|emprego anterior/i);
-  add("medicamentos",  /medicament/i);
-  add("especialidade", /especiali|formação|formacao|curso|certificad/i);
-  add("necessidades",  /necessid|cuidado especial|doença|diagnóstico|alzheimer|parkinson/i);
-  add("localizacao",   /local|endereço|endereco|bairro|cidade|CEP/i);
-  add("contrato",      /contrato|acordo|fechamos|combinado|topo/i);
-  return topics;
-}
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
+const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
 // ─────────────────────────────────────────────
-// Smart replies
+// Structured output schema for Gemini
 // ─────────────────────────────────────────────
 
-export function generateSmartReplies(
+const analysisSchema: Schema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    contractDraft: {
+      type: SchemaType.OBJECT,
+      properties: {
+        valorAcordado:  { type: SchemaType.STRING, nullable: true },
+        horarios:       { type: SchemaType.STRING, nullable: true },
+        periodo:        { type: SchemaType.STRING, nullable: true },
+        tarefas:        { type: SchemaType.ARRAY,  items: { type: SchemaType.STRING } },
+        regras:         { type: SchemaType.ARRAY,  items: { type: SchemaType.STRING } },
+      },
+      required: ["tarefas", "regras"],
+    },
+    smartReplies:      { type: SchemaType.ARRAY,  items: { type: SchemaType.STRING } },
+    discussedTopics:   { type: SchemaType.ARRAY,  items: { type: SchemaType.STRING } },
+    conversationStage: { type: SchemaType.STRING, format: "enum", enum: ["inicio", "negociacao", "acordo", "finalizado"] },
+    sentiment:         { type: SchemaType.STRING, format: "enum", enum: ["positivo", "neutro", "tenso"] },
+  },
+  required: ["contractDraft", "smartReplies", "discussedTopics", "conversationStage", "sentiment"],
+};
+
+// ─────────────────────────────────────────────
+// Prompt builder
+// ─────────────────────────────────────────────
+
+function buildPrompt(
   messages: Message[],
   currentUserId: string,
   userRole: "cuidador" | "responsavel"
-): string[] {
-  // Greeting state — no messages yet
+): string {
+  const roleLabel = userRole === "responsavel" ? "Responsável pelo idoso" : "Cuidador profissional";
+  const otherRole = userRole === "responsavel" ? "Cuidador profissional" : "Responsável pelo idoso";
+
+  const conversation = messages
+    .map((m) => {
+      const speaker = m.sender_id === currentUserId ? roleLabel : otherRole;
+      return `${speaker}: ${m.content}`;
+    })
+    .join("\n");
+
+  return `
+Você é um assistente especializado em análise de conversas entre responsáveis por idosos e cuidadores profissionais na plataforma Fly Care (Brasil).
+
+PAPEL DO USUÁRIO ATUAL: ${roleLabel}
+
+CONVERSA:
+${conversation || "(conversa ainda não iniciada)"}
+
+INSTRUÇÕES:
+
+1. **contractDraft** — Extraia da conversa os seguintes dados do contrato:
+   - valorAcordado: valor monetário (formato "R$ X/hora" ou "R$ X/dia")
+   - horarios: horário de trabalho (ex: "08h às 16h" ou "Turno da manhã")
+   - periodo: período semanal (ex: "Segunda a sexta" ou "3 dias por semana")
+   - tarefas: lista de tarefas mencionadas (higiene, medicamentos, alimentação, etc.)
+   - regras: regras/restrições mencionadas (não fumante, pontualidade, etc.)
+   Se algum campo não foi discutido ainda, use null ou array vazio.
+
+2. **smartReplies** — Gere EXATAMENTE 3 sugestões de próxima mensagem para o ${roleLabel}.
+   - Sejam naturais, em português brasileiro informal
+   - Baseadas no contexto real da conversa e no que ainda NÃO foi discutido
+   - Se a conversa está vazia, sugira uma abertura adequada ao papel
+   - Se estiver próximo de um acordo, sugira encerrar o negócio
+   - Máximo 60 caracteres cada
+
+3. **discussedTopics** — Liste os tópicos já abordados (valor, disponibilidade, referências, medicamentos, especialidade, localização, contrato, necessidades)
+
+4. **conversationStage** — Classifique o estágio:
+   - "inicio": conversa começando ou vazia
+   - "negociacao": discutindo termos
+   - "acordo": chegando em consenso
+   - "finalizado": acordo fechado
+
+5. **sentiment** — Classifique o tom geral: positivo, neutro ou tenso
+`.trim();
+}
+
+// ─────────────────────────────────────────────
+// Fallback (regex) para quando não há API key
+// ─────────────────────────────────────────────
+
+function fallbackAnalysis(
+  messages: Message[],
+  currentUserId: string,
+  userRole: "cuidador" | "responsavel"
+): GeminiAnalysis {
+  const text = messages.map((m) => m.content).join("\n");
+
+  // Valor
+  const valorMatch =
+    text.match(/R\$\s*([\d.,]+)(?:\s*\/h(?:ora)?)?/i) ||
+    text.match(/([\d.,]+)\s*(?:reais\s+por\s+hora|por\s+hora|\/hora)/i);
+  const valorAcordado = valorMatch ? `R$ ${valorMatch[1]}/hora` : undefined;
+
+  // Horário
+  const horarioMatch =
+    text.match(/(?:das?\s+)?(\d{1,2}h?\d{0,2})\s+(?:às?|-)\s+(\d{1,2}h?\d{0,2})/i) ||
+    text.match(/turno\s+(?:da\s+)?(manhã|tarde|noite)/i);
+  const horarios = horarioMatch
+    ? horarioMatch[3] ? `Turno da ${horarioMatch[3]}` : `${horarioMatch[1]} às ${horarioMatch[2]}`
+    : undefined;
+
+  const tarefasMap = [
+    { re: /banho|higiene pessoal/i,       label: "Higiene pessoal e banho" },
+    { re: /medicament/i,                   label: "Administração de medicamentos" },
+    { re: /aliment|refeição|cozinhar/i,   label: "Alimentação e refeições" },
+    { re: /companhia/i,                    label: "Companhia e apoio emocional" },
+    { re: /consulta|médico|hospital/i,    label: "Acompanhamento a consultas" },
+    { re: /fralda/i,                       label: "Troca de fraldas" },
+  ];
+  const tarefas = tarefasMap.filter((k) => k.re.test(text)).map((k) => k.label);
+
+  const regrasMap = [
+    { re: /não fum|nao fum/i, label: "Não fumante" },
+    { re: /pontual/i,         label: "Pontualidade exigida" },
+    { re: /sigilo/i,          label: "Sigilo e privacidade" },
+  ];
+  const regras = regrasMap.filter((k) => k.re.test(text)).map((k) => k.label);
+
+  // Smart replies fallback
+  const smartReplies: string[] = [];
   if (messages.length === 0) {
-    return userRole === "responsavel"
-      ? ["Olá! Qual é o seu valor por hora?", "Olá! Você tem disponibilidade imediata?"]
-      : ["Olá! Me conte sobre o perfil do paciente.", "Olá! Qual é a necessidade principal do familiar?"];
-  }
-
-  const lastMessage = messages[messages.length - 1];
-  // Don't suggest right after my own message
-  if (lastMessage.sender_id === currentUserId) return [];
-
-  const topics = getDiscussedTopics(messages);
-  const s: string[] = [];
-
-  if (userRole === "responsavel") {
-    if (!topics.has("valor"))           s.push("Qual é o seu valor por hora?");
-    if (topics.has("valor") && !topics.has("disponibilidade"))
-                                        s.push("Quais dias e horários você tem disponível?");
-    if (topics.has("disponibilidade") && !topics.has("referencias"))
-                                        s.push("Você tem referências de trabalhos anteriores?");
-    if (!topics.has("medicamentos"))    s.push("Você tem experiência com medicamentos controlados?");
-    if (!topics.has("especialidade"))   s.push("Quais são suas especializações?");
-    if (!topics.has("localizacao"))     s.push("Você atende na nossa região?");
-    if (topics.has("valor") && topics.has("disponibilidade"))
-                                        s.push("Podemos fechar o contrato? 🤝");
+    smartReplies.push(
+      userRole === "responsavel"
+        ? "Olá! Qual é o seu valor por hora?"
+        : "Olá! Me conte sobre o paciente.",
+      userRole === "responsavel"
+        ? "Olá! Você tem disponibilidade imediata?"
+        : "Olá! Qual é a necessidade principal?"
+    );
   } else {
-    if (!topics.has("necessidades"))    s.push("Quais são as necessidades do paciente?");
-    if (topics.has("necessidades") && !topics.has("medicamentos"))
-                                        s.push("O paciente usa medicamentos controlados?");
-    if (!topics.has("disponibilidade")) s.push("Qual período você necessita de cuidado?");
-    if (!topics.has("localizacao"))     s.push("Qual é o endereço para o atendimento?");
-    if (topics.has("valor") && topics.has("disponibilidade"))
-                                        s.push("Podemos agendar uma visita prévia?");
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg.sender_id !== currentUserId) {
+      if (!valorAcordado)      smartReplies.push("Qual é o seu valor por hora?");
+      if (!horarios)           smartReplies.push("Quais são seus horários disponíveis?");
+      if (tarefas.length === 0) smartReplies.push("Quais tarefas você realiza?");
+    }
   }
 
-  return s.slice(0, 3);
+  return {
+    contractDraft: { valorAcordado, horarios, tarefas, regras },
+    smartReplies: smartReplies.slice(0, 3),
+    discussedTopics: [],
+    conversationStage: messages.length === 0 ? "inicio" : "negociacao",
+    sentiment: "neutro",
+  };
+}
+
+// ─────────────────────────────────────────────
+// Main Gemini call
+// ─────────────────────────────────────────────
+
+async function analyzeWithGemini(
+  messages: Message[],
+  currentUserId: string,
+  userRole: "cuidador" | "responsavel"
+): Promise<GeminiAnalysis> {
+  if (!genAI) {
+    return fallbackAnalysis(messages, currentUserId, userRole);
+  }
+
+  const model = genAI.getGenerativeModel({
+    model: "gemini-2.0-flash",
+    generationConfig: {
+      responseMimeType: "application/json",
+      responseSchema: analysisSchema,
+      temperature: 0.3,
+    },
+  });
+
+  const prompt = buildPrompt(messages, currentUserId, userRole);
+  const result = await model.generateContent(prompt);
+  const json = result.response.text();
+  const parsed = JSON.parse(json) as GeminiAnalysis;
+
+  // Garante arrays nunca null
+  parsed.contractDraft.tarefas = parsed.contractDraft.tarefas ?? [];
+  parsed.contractDraft.regras  = parsed.contractDraft.regras  ?? [];
+  parsed.smartReplies           = parsed.smartReplies           ?? [];
+  parsed.discussedTopics        = parsed.discussedTopics        ?? [];
+
+  return parsed;
 }
 
 // ─────────────────────────────────────────────
@@ -164,21 +234,79 @@ export function useChatAI(
   currentUserId: string,
   userRole: "cuidador" | "responsavel"
 ) {
-  const contractDraft = useMemo(() => extractContractData(messages), [messages]);
-  const smartReplies = useMemo(
-    () => generateSmartReplies(messages, currentUserId, userRole),
-    [messages, currentUserId, userRole]
-  );
+  const [contractDraft, setContractDraft] = useState<ContractDraft>({ tarefas: [], regras: [] });
+  const [smartReplies, setSmartReplies]   = useState<string[]>([]);
+  const [completionScore, setCompletionScore] = useState(0);
+  const [loading, setLoading]             = useState(false);
+  const [conversationStage, setConversationStage] = useState<GeminiAnalysis["conversationStage"]>("inicio");
+  const [sentiment, setSentiment]         = useState<GeminiAnalysis["sentiment"]>("neutro");
+  const [discussedTopics, setDiscussedTopics] = useState<string[]>([]);
 
-  const completionScore = useMemo(() => {
-    const fields = [
-      contractDraft.valorAcordado,
-      contractDraft.horarios,
-      contractDraft.periodo,
-      contractDraft.tarefas.length > 0 ? "ok" : undefined,
-    ];
-    return Math.round((fields.filter(Boolean).length / fields.length) * 100);
-  }, [contractDraft]);
+  // Debounce: só chama a IA 1.5s após a última mudança nas mensagens
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevLengthRef = useRef(0);
 
-  return { contractDraft, smartReplies, completionScore };
+  useEffect(() => {
+    // Não re-analisa se o número de mensagens não mudou (ex: re-render)
+    if (messages.length === prevLengthRef.current && messages.length > 0) return;
+    prevLengthRef.current = messages.length;
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    debounceRef.current = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const analysis = await analyzeWithGemini(messages, currentUserId, userRole);
+
+        setContractDraft(analysis.contractDraft);
+        setSmartReplies(analysis.smartReplies);
+        setConversationStage(analysis.conversationStage);
+        setSentiment(analysis.sentiment);
+        setDiscussedTopics(analysis.discussedTopics);
+
+        // Completion score baseado nos campos do contrato
+        const fields = [
+          analysis.contractDraft.valorAcordado,
+          analysis.contractDraft.horarios,
+          analysis.contractDraft.periodo,
+          analysis.contractDraft.tarefas.length > 0 ? "ok" : undefined,
+        ];
+        setCompletionScore(
+          Math.round((fields.filter(Boolean).length / fields.length) * 100)
+        );
+      } catch (err) {
+        console.error("[useChatAI] Gemini error, using fallback:", err);
+        const fallback = fallbackAnalysis(messages, currentUserId, userRole);
+        setContractDraft(fallback.contractDraft);
+        setSmartReplies(fallback.smartReplies);
+      } finally {
+        setLoading(false);
+      }
+    }, 1500);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [messages, currentUserId, userRole]);
+
+  return {
+    contractDraft,
+    smartReplies,
+    completionScore,
+    loading,
+    conversationStage,
+    sentiment,
+    discussedTopics,
+  };
+}
+
+// ─────────────────────────────────────────────
+// Re-export legacy helper (usado em SmartReplies.tsx)
+// ─────────────────────────────────────────────
+export function generateSmartReplies(
+  messages: Message[],
+  currentUserId: string,
+  userRole: "cuidador" | "responsavel"
+): string[] {
+  return fallbackAnalysis(messages, currentUserId, userRole).smartReplies;
 }
