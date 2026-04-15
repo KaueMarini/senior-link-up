@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { GoogleGenerativeAI, SchemaType, type Schema } from "@google/generative-ai";
+import { supabase } from "@/integrations/supabase/client";
 
 type UserRole = "cuidador" | "responsavel";
 
@@ -19,6 +20,8 @@ interface AssistantSummary {
   nextSteps: string[];
   recommendedAction: string;
   readinessScore: number;
+  /** Facts collected from this side that should be passed to the other side when matched */
+  bridgeToOtherSide: string[];
 }
 
 interface AssistantResponse {
@@ -44,6 +47,7 @@ const responseSchema: Schema = {
         nextSteps: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
         recommendedAction: { type: SchemaType.STRING },
         readinessScore: { type: SchemaType.NUMBER },
+        bridgeToOtherSide: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
       },
       required: [
         "objective",
@@ -54,6 +58,7 @@ const responseSchema: Schema = {
         "nextSteps",
         "recommendedAction",
         "readinessScore",
+        "bridgeToOtherSide",
       ],
     },
   },
@@ -83,6 +88,7 @@ function createInitialSummary(role: UserRole): AssistantSummary {
         ? "Iniciar a triagem do caso com a IA."
         : "Iniciar a apresentacao do perfil profissional com a IA.",
     readinessScore: 10,
+    bridgeToOtherSide: [],
   };
 }
 
@@ -123,22 +129,44 @@ function buildPrompt(messages: AssistantMessage[], role: UserRole, userName: str
           "Em recommendedAction, oriente o que fazer dentro da Fly Care agora.",
         ];
 
+  const bridgeGuidance =
+    role === "responsavel"
+      ? [
+          "Em bridgeToOtherSide, liste fatos concretos sobre o caso que o cuidador precisara saber quando os dois forem conectados.",
+          "Exemplos: 'Idosa com Alzheimer grau moderado', 'Horario: segunda a sexta, das 8h as 17h', 'Localizacao: Vila Madalena - SP', 'Valor: ate R$ 2.000/mes'.",
+          "Nao inclua informacoes que o usuario ainda nao mencionou. Apenas fatos ja confirmados.",
+        ]
+      : [
+          "Em bridgeToOtherSide, liste fatos concretos sobre o perfil do cuidador que o responsavel precisara saber quando os dois forem conectados.",
+          "Exemplos: '10 anos de experiencia com Alzheimer', 'Disponivel de segunda a sabado', 'Atende na zona sul de SP', 'Valor: R$ 180/dia'.",
+          "Nao inclua informacoes que o usuario ainda nao mencionou. Apenas fatos ja confirmados.",
+        ];
+
+  const otherSideNeeds =
+    role === "responsavel"
+      ? "O CUIDADOR VAI PRECISAR SABER: diagnosticos do idoso, grau de dependencia, horarios, localizacao, tarefas do dia a dia, valor esperado, e se ha restricoes (fumantes, genero, animais etc)."
+      : "O RESPONSAVEL VAI PRECISAR SABER: especialidades e experiencia do cuidador, disponibilidade e turnos, regiao de atendimento, valor cobrado, referencias e diferenciais.";
+
   const history = messages
     .map((message) => `${message.role === "assistant" ? "IA" : userName}: ${message.content}`)
     .join("\n");
 
   return `
 Voce e a IA concierge da Fly Care, uma plataforma que conecta cuidadores e responsaveis familiares.
+A IA age como mediadora: coleta informacoes de cada lado e prepara a ponte entre eles.
 
 CONTEXTO DO USUARIO:
 - Nome: ${userName}
 - Papel: ${roleContext}
+
+${otherSideNeeds}
 
 OBJETIVO:
 - Conduzir uma entrevista curta, natural e progressiva.
 - Responder apenas com JSON valido.
 - Fazer uma unica pergunta por vez quando ainda faltarem dados importantes.
 - Se houver informacao suficiente, comecar a orientar o proximo passo com clareza.
+- Sempre que o usuario compartilhar um fato concreto, extraia e salve em bridgeToOtherSide.
 
 REGRAS:
 - Nunca seja um chatbot generico.
@@ -151,6 +179,9 @@ REGRAS:
 
 INSTRUCOES ESPECIFICAS:
 ${guidance.map((item) => `- ${item}`).join("\n")}
+
+INSTRUCOES DE PONTE (bridgeToOtherSide):
+${bridgeGuidance.map((item) => `- ${item}`).join("\n")}
 
 HISTORICO:
 ${history}
@@ -218,6 +249,21 @@ function inferSummary(messages: AssistantMessage[], role: UserRole): AssistantSu
 
   const readinessScore = Math.max(15, Math.min(95, 100 - missingData.length * 18));
 
+  // Build bridge from what we already detected
+  const bridgeToOtherSide: string[] = [];
+  if (role === "responsavel") {
+    if (hasHealthContext) bridgeToOtherSide.push("Familiar com necessidades de cuidado especificas mencionadas");
+    if (hasSchedule) bridgeToOtherSide.push("Horario ou turno ja mencionado");
+    if (hasLocation) bridgeToOtherSide.push("Localizacao ja informada");
+    if (hasBudget) bridgeToOtherSide.push("Faixa de investimento ja compartilhada");
+    if (hasUrgency) bridgeToOtherSide.push("Caso urgente - responsavel precisa de cuidador rapidamente");
+  } else {
+    if (hasExperience) bridgeToOtherSide.push("Cuidador com experiencia relevante mencionada");
+    if (hasSchedule) bridgeToOtherSide.push("Disponibilidade e turnos ja informados");
+    if (hasLocation) bridgeToOtherSide.push("Regiao de atendimento ja informada");
+    if (hasBudget) bridgeToOtherSide.push("Valor cobrado ja compartilhado");
+  }
+
   return {
     objective:
       role === "responsavel"
@@ -235,6 +281,7 @@ function inferSummary(messages: AssistantMessage[], role: UserRole): AssistantSu
           ? "Usar a aba Cuidadores para falar com os perfis mais aderentes."
           : "Usar a aba Chat para avancar com conversas mais qualificadas.",
     readinessScore,
+    bridgeToOtherSide,
   };
 }
 
@@ -280,12 +327,54 @@ async function generateAssistantResponse(
     parsed.summary.missingData = parsed.summary.missingData ?? [];
     parsed.summary.idealMatch = parsed.summary.idealMatch ?? [];
     parsed.summary.nextSteps = parsed.summary.nextSteps ?? [];
+    parsed.summary.bridgeToOtherSide = parsed.summary.bridgeToOtherSide ?? [];
     parsed.summary.readinessScore = Math.max(0, Math.min(100, parsed.summary.readinessScore ?? 0));
 
     return parsed;
   } catch (error) {
     console.error("[useCareMatchAI] falling back after Gemini error", error);
     return fallbackResponse(messages, role);
+  }
+}
+
+async function persistToSupabase(userId: string, role: UserRole, summary: AssistantSummary): Promise<void> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any)
+      .from("ai_profile_summaries")
+      .upsert(
+        {
+          user_id: userId,
+          role,
+          summary_data: summary,
+          bridge_data: summary.bridgeToOtherSide,
+          readiness_score: summary.readinessScore,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id,role" },
+      );
+  } catch {
+    // Silently fail — localStorage already has the data
+  }
+}
+
+async function loadFromSupabase(
+  userId: string,
+  role: UserRole,
+): Promise<{ messages?: AssistantMessage[]; summary?: AssistantSummary } | null> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any)
+      .from("ai_profile_summaries")
+      .select("summary_data, updated_at")
+      .eq("user_id", userId)
+      .eq("role", role)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return { summary: data.summary_data as AssistantSummary };
+  } catch {
+    return null;
   }
 }
 
@@ -299,29 +388,46 @@ export function useCareMatchAI(userId: string | undefined, userName: string, rol
   const [summary, setSummary] = useState<AssistantSummary>(createInitialSummary(role));
   const [loading, setLoading] = useState(false);
 
+  // Load conversation: prefer localStorage (instant), then merge Supabase summary if newer
   useEffect(() => {
     const initialMessage = createInitialMessage(role, userName);
     const stored = localStorage.getItem(storageKey);
 
-    if (!stored) {
-      setMessages([initialMessage]);
-      setSummary(createInitialSummary(role));
-      return;
+    let localMessages: AssistantMessage[] = [initialMessage];
+    let localSummary: AssistantSummary = createInitialSummary(role);
+
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as {
+          messages?: AssistantMessage[];
+          summary?: AssistantSummary;
+        };
+        localMessages = parsed.messages && parsed.messages.length > 0 ? parsed.messages : [initialMessage];
+        localSummary = parsed.summary ?? createInitialSummary(role);
+      } catch {
+        // keep defaults
+      }
     }
 
-    try {
-      const parsed = JSON.parse(stored) as {
-        messages?: AssistantMessage[];
-        summary?: AssistantSummary;
-      };
-      setMessages(parsed.messages && parsed.messages.length > 0 ? parsed.messages : [initialMessage]);
-      setSummary(parsed.summary ?? createInitialSummary(role));
-    } catch {
-      setMessages([initialMessage]);
-      setSummary(createInitialSummary(role));
-    }
-  }, [role, storageKey, userName]);
+    setMessages(localMessages);
+    setSummary(localSummary);
 
+    // Hydrate bridge data from Supabase in the background (if logged in)
+    if (userId) {
+      loadFromSupabase(userId, role).then((remote) => {
+        if (!remote?.summary) return;
+        // Only use remote summary if local has no bridge yet
+        setSummary((current) => {
+          if (current.bridgeToOtherSide.length === 0 && remote.summary!.bridgeToOtherSide.length > 0) {
+            return remote.summary!;
+          }
+          return current;
+        });
+      });
+    }
+  }, [role, storageKey, userName, userId]);
+
+  // Persist to localStorage whenever messages or summary change
   useEffect(() => {
     if (messages.length === 0) return;
     localStorage.setItem(storageKey, JSON.stringify({ messages, summary }));
@@ -353,6 +459,11 @@ export function useCareMatchAI(userId: string | undefined, userName: string, rol
 
       setMessages((current) => [...current, assistantMessage]);
       setSummary(response.summary);
+
+      // Fire-and-forget Supabase persistence
+      if (userId) {
+        void persistToSupabase(userId, role, response.summary);
+      }
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Bot, RotateCcw, Send, Sparkles, Target, UserRoundSearch } from "lucide-react";
+import { ArrowLeftRight, Bot, RotateCcw, Send, Sparkles, Target, UserRoundSearch } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useCareMatchAI } from "@/hooks/useCareMatchAI";
@@ -181,6 +181,32 @@ const AIAssistantTab = ({ userRole }: AIAssistantTabProps) => {
             </div>
           </CardContent>
         </Card>
+
+        {summary.bridgeToOtherSide.length > 0 && (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <ArrowLeftRight className="h-4 w-4 text-primary" />
+                {userRole === "responsavel" ? "Para o cuidador" : "Para o responsavel"}
+              </CardTitle>
+              <CardDescription>
+                {userRole === "responsavel"
+                  ? "O que a IA ja coletou para passar ao cuidador no momento do match."
+                  : "O que a IA ja coletou para passar ao responsavel no momento do match."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-sm">
+              <ul className="space-y-2 text-muted-foreground">
+                {summary.bridgeToOtherSide.map((item: string) => (
+                  <li key={item} className="flex items-start gap-2">
+                    <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>
