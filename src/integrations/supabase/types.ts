@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_profile_summaries: {
+        Row: {
+          bridge_data: Json
+          id: string
+          readiness_score: number
+          role: string
+          summary_data: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bridge_data?: Json
+          id?: string
+          readiness_score?: number
+          role: string
+          summary_data?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bridge_data?: Json
+          id?: string
+          readiness_score?: number
+          role?: string
+          summary_data?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           created_at: string
@@ -95,81 +125,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      dependentes: {
-        Row: {
-          id: string
-          responsavel_id: string
-          nome: string
-          data_nascimento: string | null
-          diagnosticos: string[] | null
-          nivel_dependencia: string | null
-          medicamentos_ativos: string | null
-          observacoes: string | null
-          avatar_url: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          responsavel_id: string
-          nome: string
-          data_nascimento?: string | null
-          diagnosticos?: string[] | null
-          nivel_dependencia?: string | null
-          medicamentos_ativos?: string | null
-          observacoes?: string | null
-          avatar_url?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          responsavel_id?: string
-          nome?: string
-          data_nascimento?: string | null
-          diagnosticos?: string[] | null
-          nivel_dependencia?: string | null
-          medicamentos_ativos?: string | null
-          observacoes?: string | null
-          avatar_url?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      vinculos: {
-        Row: {
-          id: string
-          responsavel_id: string
-          dependente_id: string
-          cuidador_profile_id: string
-          status: string
-          proposta_texto: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          responsavel_id: string
-          dependente_id: string
-          cuidador_profile_id: string
-          status?: string
-          proposta_texto?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          responsavel_id?: string
-          dependente_id?: string
-          cuidador_profile_id?: string
-          status?: string
-          proposta_texto?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
       }
       certificates: {
         Row: {
@@ -265,6 +220,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      dependentes: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          data_nascimento: string | null
+          diagnosticos: string[] | null
+          id: string
+          medicamentos_ativos: string | null
+          nivel_dependencia: string | null
+          nome: string
+          observacoes: string | null
+          responsavel_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          data_nascimento?: string | null
+          diagnosticos?: string[] | null
+          id?: string
+          medicamentos_ativos?: string | null
+          nivel_dependencia?: string | null
+          nome: string
+          observacoes?: string | null
+          responsavel_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          data_nascimento?: string | null
+          diagnosticos?: string[] | null
+          id?: string
+          medicamentos_ativos?: string | null
+          nivel_dependencia?: string | null
+          nome?: string
+          observacoes?: string | null
+          responsavel_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       favorites: {
         Row: {
@@ -482,6 +479,54 @@ export type Database = {
           url?: string
         }
         Relationships: []
+      }
+      vinculos: {
+        Row: {
+          created_at: string | null
+          cuidador_profile_id: string
+          dependente_id: string
+          id: string
+          proposta_texto: string | null
+          responsavel_id: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          cuidador_profile_id: string
+          dependente_id: string
+          id?: string
+          proposta_texto?: string | null
+          responsavel_id: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          cuidador_profile_id?: string
+          dependente_id?: string
+          id?: string
+          proposta_texto?: string | null
+          responsavel_id?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vinculos_cuidador_profile_id_fkey"
+            columns: ["cuidador_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vinculos_dependente_id_fkey"
+            columns: ["dependente_id"]
+            isOneToOne: false
+            referencedRelation: "dependentes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
