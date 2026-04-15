@@ -1,11 +1,11 @@
-import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import Header from "@/components/Header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Video, BookOpen, Award, Settings, MessageSquare } from "lucide-react";
+import { User, Video, Award, Settings, MessageSquare, Sparkles } from "lucide-react";
 import CuidadorPerfil from "@/components/dashboard/CuidadorPerfil";
 import ChatTab from "@/components/chat/ChatTab";
+import AIAssistantTab from "@/components/chat/AIAssistantTab";
 import CuidadorVideos from "@/components/dashboard/CuidadorVideos";
 import CuidadorCertificados from "@/components/dashboard/CuidadorCertificados";
 import CuidadorConfiguracoes from "@/components/dashboard/CuidadorConfiguracoes";
@@ -39,9 +39,12 @@ const CuidadorDashboard = () => {
         </div>
 
         <Tabs defaultValue="perfil" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 lg:w-auto lg:inline-grid">
             <TabsTrigger value="perfil" className="gap-2">
               <User className="h-4 w-4" /> Perfil
+            </TabsTrigger>
+            <TabsTrigger value="assistente" className="gap-2">
+              <Sparkles className="h-4 w-4" /> IA
             </TabsTrigger>
             <TabsTrigger value="chat" className="gap-2">
               <MessageSquare className="h-4 w-4" /> Chat
@@ -64,6 +67,10 @@ const CuidadorDashboard = () => {
               onUploadAvatar={uploadAvatar}
               onUploadBanner={uploadBanner}
             />
+          </TabsContent>
+
+          <TabsContent value="assistente">
+            <AIAssistantTab userRole="cuidador" />
           </TabsContent>
 
           <TabsContent value="chat">
