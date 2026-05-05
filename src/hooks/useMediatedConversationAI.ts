@@ -1,4 +1,8 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, SchemaType, type Schema } from "@google/generative-ai";
+
+// ─────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────
 
 export type MediatedRole = "responsavel" | "cuidador";
 
@@ -7,8 +11,17 @@ export interface MediatedMessageRecord {
   author_role: "responsavel" | "cuidador" | "ai";
   visible_to_role: "responsavel" | "cuidador" | "both";
   content: string;
-  message_kind: "message" | "summary" | "question" | "system";
+  message_kind: "message" | "summary" | "question" | "system" | "contract";
   created_at: string;
+}
+
+export interface MediatedContract {
+  valorAcordado?: string;
+  horarios?: string;
+  periodo?: string;
+  tarefas: string[];
+  regras: string[];
+  resumoFinal: string;
 }
 
 interface MediatedAIResult {
@@ -19,61 +32,244 @@ interface MediatedAIResult {
   readinessScore: number;
   missingTopics: string[];
   compatibilitySignals: string[];
+  contractReady: boolean;
+  contract: MediatedContract;
 }
+
+// ─────────────────────────────────────────────
+// Gemini client
+// ─────────────────────────────────────────────
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
 const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
+
+// ─────────────────────────────────────────────
+// Structured output schema
+// ─────────────────────────────────────────────
+
+const mediationSchema: Schema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    replyToSender:        { type: SchemaType.STRING },
+    bridgeForOtherSide:   { type: SchemaType.STRING },
+    matchSummary:         { type: SchemaType.STRING },
+    nextStep:             { type: SchemaType.STRING },
+    readinessScore:       { type: SchemaType.NUMBER },
+    missingTopics:        { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+    compatibilitySignals: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+    contractReady:        { type: SchemaType.BOOLEAN },
+    contract: {
+      type: SchemaType.OBJECT,
+      properties: {
+        valorAcordado: { type: SchemaType.STRING, nullable: true },
+        horarios:      { type: SchemaType.STRING, nullable: true },
+        periodo:       { type: SchemaType.STRING, nullable: true },
+        tarefas:       { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+        regras:        { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+        resumoFinal:   { type: SchemaType.STRING },
+      },
+      required: ["tarefas", "regras", "resumoFinal"],
+    },
+  },
+  required: [
+    "replyToSender", "bridgeForOtherSide", "matchSummary", "nextStep",
+    "readinessScore", "missingTopics", "compatibilitySignals", "contractReady", "contract",
+  ],
+};
+
+// ─────────────────────────────────────────────
+// Prompt builder
+// ─────────────────────────────────────────────
+
+function buildMediationPrompt(
+  transcript: MediatedMessageRecord[],
+  senderRole: MediatedRole,
+): string {
+  const roleLabel  = senderRole === "responsavel" ? "Responsável pelo idoso" : "Cuidador profissional";
+  const otherLabel = senderRole === "responsavel" ? "Cuidador" : "Responsável";
+
+  const transcriptText = transcript
+    .filter((m) => m.message_kind !== "contract")
+    .map((m) => {
+      const author =
+        m.author_role === "ai"
+          ? "IA Fly Care"
+          : m.author_role === "responsavel"
+          ? "Responsável"
+          : "Cuidador";
+      return `[${author} → visível para: ${m.visible_to_role}] ${m.content}`;
+    })
+    .join("\n");
+
+  return `
+Você é a IA mediadora da Fly Care, plataforma que conecta responsáveis por idosos a cuidadores profissionais no Brasil.
+
+MISSÃO: Entrevistar cada lado SEPARADAMENTE, coletar todas as informações necessárias e, quando ambos os lados tiverem fornecido dados suficientes e compatíveis, gerar um contrato inicial visível para os dois.
+
+QUEM ESTÁ FALANDO AGORA: ${roleLabel}
+
+━━━ INFORMAÇÕES A COLETAR ━━━
+
+DO RESPONSÁVEL:
+1. Paciente: idade, diagnósticos principais, nível de mobilidade/dependência
+2. Tarefas necessárias: higiene, medicamentos, alimentação, companhia, consultas, fraldas, fisioterapia
+3. Horário: dias da semana, turno (manhã/tarde/noite/integral/plantão 12h/24h)
+4. Localização: bairro e cidade
+5. Orçamento: valor por hora, diária ou mensalidade
+6. Regras: não fumante, animais de estimação, restrições etc.
+
+DO CUIDADOR:
+1. Experiência: anos de atuação, especializações (Alzheimer, AVC, acamados, demência)
+2. Disponibilidade: dias e horários, tipo de serviço (diarista, fixo, plantão)
+3. Localização: bairro/região onde atende
+4. Valores: quanto cobra (por hora, diária ou mensalidade)
+5. Formação: certificações, cursos relevantes
+
+━━━ REGRAS DE ENTREVISTA ━━━
+- Faça UMA pergunta por mensagem — nunca bombardeie o usuário
+- Confirme o que entendeu antes de pedir o próximo ponto
+- Tom acolhedor, profissional, em português brasileiro informal
+- NUNCA revele a mensagem bruta do outro lado
+- Quando este lado tiver fornecido todas as informações essenciais, diga:
+  "Perfeito! Já tenho o que preciso da sua parte. Estou finalizando o alinhamento com o outro lado."
+
+━━━ QUANDO DEFINIR contractReady: true ━━━
+Somente quando AMBAS as condições forem verdadeiras:
+✓ Responsável forneceu: dados do paciente + tarefas + horário + localização + orçamento
+✓ Cuidador forneceu: experiência + disponibilidade + localização + valores
+E os dados são compatíveis (orçamento ≥ 80% do valor pedido, horários sobrepostos, localização viável)
+readinessScore deve ser ≥ 85 para contractReady ser true.
+
+━━━ TRANSCRIÇÃO COMPLETA (você vê tudo) ━━━
+${transcriptText || "(primeira mensagem — nenhum histórico ainda)"}
+
+━━━ INSTRUÇÕES DE SAÍDA ━━━
+- replyToSender: resposta natural para ${roleLabel} (máx 3 frases, direto ao ponto)
+  • Se for a PRIMEIRA mensagem, cumprimente e faça a primeira pergunta essencial para o papel
+  • Se ainda faltam dados, confirme o que entendeu e pergunte o próximo item
+  • Se este lado completou o onboarding, informe que está aguardando o outro lado
+- bridgeForOtherSide: mensagem que você enviaria para o ${otherLabel} sem expor a fala bruta
+  • Pode ser uma pergunta nova baseada no que aprendeu, confirmação de progresso, aviso de que o outro lado avançou
+  • Máx 2 frases
+- matchSummary: estado do match em 1 frase objetiva
+- nextStep: próximo ponto a coletar ou ação recomendada
+- readinessScore: 0 (sem dados) → 85+ (contrato pronto)
+- missingTopics: lista de tópicos que ainda faltam ser discutidos
+- compatibilitySignals: o que já está alinhado entre os dois lados
+- contractReady: true APENAS quando ambos têm dados suficientes E compatíveis
+- contract: preencha quando contractReady=true; extraia das informações já coletadas na conversa:
+  • valorAcordado: valor acordado no formato "R$ X/hora" ou "R$ X/dia" ou "R$ X/mês"
+  • horarios: ex. "08h às 16h" ou "Turno da manhã"
+  • periodo: ex. "Segunda a sexta" ou "3 dias por semana"
+  • tarefas: lista com as tarefas confirmadas
+  • regras: lista com regras/restrições confirmadas
+  • resumoFinal: 2-3 frases descrevendo o acordo de forma clara para ambas as partes
+  Quando contractReady=false: use strings vazias e arrays vazios no objeto contract.
+`.trim();
+}
+
+// ─────────────────────────────────────────────
+// Fallback
+// ─────────────────────────────────────────────
 
 function fallbackMediation(
   transcript: MediatedMessageRecord[],
   senderRole: MediatedRole,
 ): MediatedAIResult {
-  const text = transcript.map((message) => message.content).join("\n");
-  const hasPrice = /(r\$|reais|valor|hora|diaria|mensal)/i.test(text);
-  const hasSchedule = /(manha|tarde|noite|segunda|terca|quarta|quinta|sexta|sabado|domingo|turno|horario)/i.test(text);
-  const hasLocation = /(bairro|cidade|regiao|zona|sao paulo|rio)/i.test(text);
-  const hasCareNeed = /(banho|medicament|companhia|aliment|alzheimer|demencia|acamad|consulta|fralda)/i.test(text);
+  const text = transcript.map((m) => m.content).join("\n");
 
-  const missingTopics = [
-    !hasCareNeed ? "detalhar necessidades do cuidado" : null,
-    !hasSchedule ? "alinhar horarios e disponibilidade" : null,
-    !hasPrice ? "alinhar faixa de valor" : null,
-    !hasLocation ? "confirmar localizacao" : null,
+  const has = (re: RegExp) => re.test(text);
+  const hasPaciente   = has(/(idade|anos|diagnos|alzheimer|avc|acamad|demenci|depende)/i);
+  const hasTarefa     = has(/(banho|higiene|medicament|aliment|companhia|consulta|fralda)/i);
+  const hasHorario    = has(/(manha|tarde|noite|segunda|terca|quarta|quinta|sexta|horario|turno|integral|plantao)/i);
+  const hasLocal      = has(/(bairro|cidade|regiao|zona|sao paulo|rio|endereco)/i);
+  const hasValor      = has(/(r\$|reais|valor|hora|diaria|mensal|cobr|pag)/i);
+  const hasExp        = has(/(anos|experiencia|especializ|trabalhei|cuidei|formac|certif)/i);
+  const hasDisp       = has(/(disponiv|trabalho|atendo|fixo|diarista|plantao)/i);
+
+  const responsavelOk = hasPaciente && hasTarefa && hasHorario && hasLocal && hasValor;
+  const cuidadorOk    = hasExp && hasDisp && hasLocal && hasValor;
+
+  const missingTopics: string[] = [];
+  if (senderRole === "responsavel") {
+    if (!hasPaciente)  missingTopics.push("dados do paciente (idade e diagnóstico)");
+    if (!hasTarefa)    missingTopics.push("tarefas necessárias");
+    if (!hasHorario)   missingTopics.push("horário e dias da semana");
+    if (!hasLocal)     missingTopics.push("localização");
+    if (!hasValor)     missingTopics.push("orçamento disponível");
+  } else {
+    if (!hasExp)       missingTopics.push("experiência e especializações");
+    if (!hasDisp)      missingTopics.push("disponibilidade e tipo de serviço");
+    if (!hasLocal)     missingTopics.push("região de atendimento");
+    if (!hasValor)     missingTopics.push("valores cobrados");
+  }
+
+  const compatibilitySignals: string[] = [
+    hasPaciente && "Perfil do paciente mapeado",
+    hasTarefa   && "Tarefas de cuidado identificadas",
+    hasHorario  && "Disponibilidade de horário discutida",
+    hasLocal    && "Localização alinhada",
+    hasValor    && "Valores em discussão",
+    hasExp      && "Experiência do cuidador apresentada",
   ].filter(Boolean) as string[];
 
-  const compatibilitySignals = [
-    hasCareNeed ? "As necessidades do cuidado ja estao mais claras" : null,
-    hasSchedule ? "Ja existe alguma nocao de disponibilidade" : null,
-    hasPrice ? "Ja ha abertura para falar de investimento" : null,
-    hasLocation ? "A localizacao ja entrou na conversa" : null,
-  ].filter(Boolean) as string[];
+  const totalFields = 5;
+  const filledSide  = senderRole === "responsavel"
+    ? [hasPaciente, hasTarefa, hasHorario, hasLocal, hasValor].filter(Boolean).length
+    : [hasExp, hasDisp, hasLocal, hasValor, hasTarefa].filter(Boolean).length;
 
-  const readinessScore = [hasCareNeed, hasSchedule, hasPrice, hasLocation].filter(Boolean).length * 25;
+  const baseScore = Math.round((filledSide / totalFields) * 50);
+  const readinessScore = responsavelOk && cuidadorOk ? 90 : baseScore;
+  const contractReady  = responsavelOk && cuidadorOk;
+
+  const firstMissing = missingTopics[0];
+  const replyToSender = contractReady
+    ? "Ótimo! Já tenho todas as informações necessárias. Vou gerar o contrato inicial agora."
+    : transcript.length === 0 || transcript.filter((m) => m.author_role === senderRole).length === 0
+    ? senderRole === "responsavel"
+      ? "Olá! Sou a IA da Fly Care e vou mediar esta negociação. Para começar, me conta: qual a idade do seu familiar e quais são os principais cuidados que ele precisa?"
+      : "Olá! Sou a IA da Fly Care e vou mediar esta negociação. Para começar, há quantos anos você atua como cuidador e quais são suas especializações?"
+    : firstMissing
+    ? `Entendi. Agora preciso de mais um ponto: ${firstMissing}.`
+    : "Entendi. Já estou finalizando o alinhamento com o outro lado.";
+
+  const bridgeForOtherSide = senderRole === "responsavel"
+    ? "A família avançou com mais detalhes. Para ajustar o match, preciso de mais informações da sua parte."
+    : "O cuidador compartilhou novos detalhes. Para ajustar o match, preciso de mais informações da sua parte.";
+
+  const emptyContract: MediatedContract = { tarefas: [], regras: [], resumoFinal: "" };
 
   return {
-    replyToSender:
-      missingTopics.length > 0
-        ? `Entendi. Vou usar isso para aproximar voces melhor. Agora preciso de mais um ponto: ${missingTopics[0]}.`
-        : "Entendi. Ja existe base suficiente para eu conduzir voces rumo a uma consulta inicial.",
-    bridgeForOtherSide:
-      senderRole === "responsavel"
-        ? "A familia compartilhou novos detalhes do caso. Vou confirmar disponibilidade, encaixe e proximos passos com voce."
-        : "O cuidador compartilhou novos detalhes de experiencia e disponibilidade. Vou validar encaixe e proximos passos com a familia.",
-    matchSummary:
-      readinessScore >= 75
-        ? "Os dois lados ja mostram boa base para avancar para uma consulta inicial."
-        : "O match esta em construcao e ainda precisa de mais alinhamento antes da consulta.",
-    nextStep:
-      readinessScore >= 75
-        ? "Confirmar formato e horario de uma consulta inicial."
-        : missingTopics.length > 0
-          ? `Coletar: ${missingTopics[0]}.`
-          : "Continuar refinando o encaixe entre expectativas e disponibilidade.",
+    replyToSender,
+    bridgeForOtherSide,
+    matchSummary: contractReady
+      ? "Ambos os lados forneceram informações suficientes. Contrato gerado!"
+      : `Coletando dados. ${filledSide} de ${totalFields} pontos confirmados.`,
+    nextStep: firstMissing ?? "Gerar contrato.",
     readinessScore,
     missingTopics,
     compatibilitySignals,
+    contractReady,
+    contract: contractReady
+      ? {
+          valorAcordado: undefined,
+          horarios: undefined,
+          periodo: undefined,
+          tarefas: hasTarefa
+            ? ["higiene", "medicamentos", "alimentação"].filter((t) =>
+                new RegExp(t.split("").join(".*"), "i").test(text)
+              )
+            : [],
+          regras: [],
+          resumoFinal: "Acordo identificado com base nas informações coletadas de ambos os lados. Confirme os detalhes abaixo.",
+        }
+      : emptyContract,
   };
 }
+
+// ─────────────────────────────────────────────
+// Main Gemini call
+// ─────────────────────────────────────────────
 
 export async function mediateConversation(
   transcript: MediatedMessageRecord[],
@@ -82,53 +278,39 @@ export async function mediateConversation(
   if (!genAI) return fallbackMediation(transcript, senderRole);
 
   try {
-    const transcriptText = transcript
-      .map((message) => `[${message.author_role}/${message.visible_to_role}] ${message.content}`)
-      .join("\n");
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash",
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: mediationSchema,
+        temperature: 0.4,
+      },
+    });
 
-    const prompt = `
-Voce e a IA mediadora da Fly Care.
-O responsavel e o cuidador nao conversam diretamente entre si.
-Cada um fala apenas com voce, e voce faz a ponte.
-
-REGRAS:
-- Nunca revele a mensagem bruta de um lado para o outro.
-- Fale com linguagem humana, profissional e acolhedora.
-- Sua funcao e aproximar, alinhar expectativas e conduzir para consulta inicial.
-- Responda apenas com JSON valido.
-
-CONTEXTO:
-- Lado que acabou de falar: ${senderRole}
-- Outro lado: ${senderRole === "responsavel" ? "cuidador" : "responsavel"}
-
-TRANSCRICAO:
-${transcriptText || "(sem historico)"}
-
-RETORNE JSON COM:
-- replyToSender: resposta curta para quem acabou de falar
-- bridgeForOtherSide: mensagem curta que voce enviaria para o outro lado sem expor a fala bruta
-- matchSummary: resumo curto do estado atual do match
-- nextStep: proximo passo recomendado
-- readinessScore: numero de 0 a 100
-- missingTopics: lista de pendencias
-- compatibilitySignals: lista de sinais de compatibilidade
-`.trim();
-
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const prompt = buildMediationPrompt(transcript, senderRole);
     const result = await model.generateContent(prompt);
     const parsed = JSON.parse(result.response.text()) as MediatedAIResult;
 
     return {
-      replyToSender: parsed.replyToSender ?? "Entendi. Vou continuar intermediando isso para voce.",
-      bridgeForOtherSide: parsed.bridgeForOtherSide ?? "Recebi novas informacoes e vou validar isso com o outro lado.",
-      matchSummary: parsed.matchSummary ?? "O match esta sendo construido pela IA.",
-      nextStep: parsed.nextStep ?? "Continuar a coleta de informacoes relevantes.",
-      readinessScore: Math.max(0, Math.min(100, parsed.readinessScore ?? 0)),
-      missingTopics: parsed.missingTopics ?? [],
+      replyToSender:        parsed.replyToSender        ?? "Entendi. Vou continuar intermediando isso para você.",
+      bridgeForOtherSide:   parsed.bridgeForOtherSide   ?? "Recebi novas informações. Vou confirmar isso com o outro lado.",
+      matchSummary:         parsed.matchSummary         ?? "Match em construção.",
+      nextStep:             parsed.nextStep             ?? "Continuar coletando informações.",
+      readinessScore:       Math.max(0, Math.min(100, parsed.readinessScore ?? 0)),
+      missingTopics:        parsed.missingTopics        ?? [],
       compatibilitySignals: parsed.compatibilitySignals ?? [],
+      contractReady:        parsed.contractReady        ?? false,
+      contract: {
+        valorAcordado: parsed.contract?.valorAcordado ?? undefined,
+        horarios:      parsed.contract?.horarios      ?? undefined,
+        periodo:       parsed.contract?.periodo       ?? undefined,
+        tarefas:       parsed.contract?.tarefas       ?? [],
+        regras:        parsed.contract?.regras        ?? [],
+        resumoFinal:   parsed.contract?.resumoFinal   ?? "",
+      },
     };
   } catch (error) {
-    console.error("[mediateConversation] fallback after Gemini error", error);
+    console.error("[mediateConversation] Gemini error → fallback", error);
     return fallbackMediation(transcript, senderRole);
   }
 }
