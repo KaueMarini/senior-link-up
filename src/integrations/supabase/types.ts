@@ -292,6 +292,39 @@ export type Database = {
           },
         ]
       }
+      mediated_chat_messages: {
+        Row: {
+          author_role: string
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          message_kind: string
+          owner_user_id: string | null
+          visible_to_role: string
+        }
+        Insert: {
+          author_role: string
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          message_kind?: string
+          owner_user_id?: string | null
+          visible_to_role: string
+        }
+        Update: {
+          author_role?: string
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          message_kind?: string
+          owner_user_id?: string | null
+          visible_to_role?: string
+        }
+        Relationships: []
+      }
       medical_exams: {
         Row: {
           appointment_id: string | null
@@ -444,6 +477,60 @@ export type Database = {
           updated_at?: string
           user_id?: string
           verificado?: boolean | null
+        }
+        Relationships: []
+      }
+      proposals: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          cuidador_accepted: boolean
+          cuidador_id: string
+          horarios: string | null
+          id: string
+          mensagem: string | null
+          periodo: string | null
+          regras: string[]
+          responsavel_accepted: boolean
+          responsavel_id: string
+          status: string
+          tarefas: string[]
+          updated_at: string
+          valor: string | null
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          cuidador_accepted?: boolean
+          cuidador_id: string
+          horarios?: string | null
+          id?: string
+          mensagem?: string | null
+          periodo?: string | null
+          regras?: string[]
+          responsavel_accepted?: boolean
+          responsavel_id: string
+          status?: string
+          tarefas?: string[]
+          updated_at?: string
+          valor?: string | null
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          cuidador_accepted?: boolean
+          cuidador_id?: string
+          horarios?: string | null
+          id?: string
+          mensagem?: string | null
+          periodo?: string | null
+          regras?: string[]
+          responsavel_accepted?: boolean
+          responsavel_id?: string
+          status?: string
+          tarefas?: string[]
+          updated_at?: string
+          valor?: string | null
         }
         Relationships: []
       }
