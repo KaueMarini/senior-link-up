@@ -67,6 +67,19 @@ const createEmptyInsight = (): ConversationInsight => ({
   smartReplies: [],
 });
 
+const normalizeInsight = (raw: any): ConversationInsight => {
+  const base = createEmptyInsight();
+  if (!raw || typeof raw !== "object") return base;
+  return {
+    matchSummary: typeof raw.matchSummary === "string" ? raw.matchSummary : base.matchSummary,
+    nextStep: typeof raw.nextStep === "string" ? raw.nextStep : base.nextStep,
+    readinessScore: typeof raw.readinessScore === "number" ? raw.readinessScore : 0,
+    missingTopics: Array.isArray(raw.missingTopics) ? raw.missingTopics : [],
+    compatibilitySignals: Array.isArray(raw.compatibilitySignals) ? raw.compatibilitySignals : [],
+    smartReplies: Array.isArray(raw.smartReplies) ? raw.smartReplies : [],
+  };
+};
+
 // ─────────────────────────────────────────────
 // Contract PDF helper
 // ─────────────────────────────────────────────
@@ -318,7 +331,7 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
           const next = payload.new as MediatedMessageRecord;
           setMessages((prev) => [...prev, next]);
           if (next.message_kind === "summary") {
-            try { setInsight(JSON.parse(next.content) as ConversationInsight); } catch { /* ignore */ }
+            try { setInsight(normalizeInsight(JSON.parse(next.content))); } catch { /* ignore */ }
           }
         },
       )
@@ -375,7 +388,7 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
       (m) => m.author_role === "ai" && m.message_kind === "summary",
     );
     if (latestSummary) {
-      try { setInsight(JSON.parse(latestSummary.content) as ConversationInsight); } catch { /* ignore */ }
+      try { setInsight(normalizeInsight(JSON.parse(latestSummary.content))); } catch { /* ignore */ }
     }
   };
 
