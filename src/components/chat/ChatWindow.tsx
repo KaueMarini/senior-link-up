@@ -737,6 +737,17 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
           </Card>
         )}
       </div>
+
+      <SendProposalDialog
+        open={proposalDialogOpen}
+        onClose={() => setProposalDialogOpen(false)}
+        conversationId={conversationId}
+        responsavelId={responsavelId}
+        cuidadorId={cuidadorId}
+        cuidadorNome={otherUser.nome}
+        prefill={contract}
+        onSent={fetchProposal}
+      />
     </div>
   );
 };
