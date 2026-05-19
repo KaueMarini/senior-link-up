@@ -3,7 +3,6 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   ArrowLeft,
-  ExternalLink,
   Send,
   Sparkles,
   PartyPopper,
@@ -14,6 +13,7 @@ import {
   ListTodo,
   Shield,
   Calendar,
+  FileSignature,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +31,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import ProposalCard, { type ProposalRecord } from "./ProposalCard";
+import SendProposalDialog from "./SendProposalDialog";
 
 // ─────────────────────────────────────────────
 // Types
@@ -266,7 +268,13 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending]       = useState(false);
   const [insight, setInsight]       = useState<ConversationInsight>(createEmptyInsight());
+  const [proposal, setProposal]     = useState<ProposalRecord | null>(null);
+  const [myPhone, setMyPhone]       = useState<string | null>(null);
+  const [proposalDialogOpen, setProposalDialogOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const responsavelId = myRole === "responsavel" ? user?.id ?? "" : otherUser.id;
+  const cuidadorId    = myRole === "cuidador"    ? user?.id ?? "" : otherUser.id;
 
   // Messages visible to this user (my role or "both"), excluding internal summaries
   const visibleMessages = useMemo(
@@ -296,6 +304,8 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
 
   useEffect(() => {
     fetchMessages();
+    fetchProposal();
+    fetchMyPhone();
 
     const channel = supabase
       .channel(`mediated-chat-${conversationId}`)
@@ -310,10 +320,40 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
           }
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "proposals", filter: `conversation_id=eq.${conversationId}` },
+        (payload) => {
+          if (payload.eventType === "DELETE") setProposal(null);
+          else setProposal(payload.new as ProposalRecord);
+        },
+      )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
+     
   }, [conversationId]);
+
+  const fetchProposal = async () => {
+    const { data } = await (supabase as any)
+      .from("proposals")
+      .select("*")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (data) setProposal(data as ProposalRecord);
+  };
+
+  const fetchMyPhone = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("telefone")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    setMyPhone(data?.telefone ?? null);
+  };
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -437,11 +477,8 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
     setSending(false);
   };
 
-  const handleWhatsApp = () => {
-    const phone = otherUser.telefone?.replace(/\D/g, "");
-    if (!phone) return;
-    window.open(`https://wa.me/55${phone}?text=Ola ${otherUser.nome}, estou entrando em contato pelo FlyCare!`, "_blank");
-  };
+
+
 
   // ─────────────────────────────────────────────
   // Render
@@ -484,10 +521,14 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
             </div>
           </div>
 
-          {otherUser.telefone && (
-            <Button variant="outline" size="sm" onClick={handleWhatsApp} className="gap-2 shrink-0">
-              <ExternalLink className="h-4 w-4" />
-              <span className="hidden sm:inline">WhatsApp</span>
+          {myRole === "responsavel" && (!proposal || proposal.status === "recusada") && (
+            <Button
+              size="sm"
+              onClick={() => setProposalDialogOpen(true)}
+              className="gap-2 shrink-0"
+            >
+              <FileSignature className="h-4 w-4" />
+              <span className="hidden sm:inline">Enviar proposta</span>
             </Button>
           )}
         </div>
@@ -545,6 +586,17 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
                 </div>
               );
             })}
+            {proposal && (
+              <ProposalCard
+                proposal={proposal}
+                myRole={myRole}
+                responsavelPhone={myRole === "responsavel" ? myPhone : otherUser.telefone ?? null}
+                cuidadorPhone={myRole === "cuidador" ? myPhone : otherUser.telefone ?? null}
+                responsavelNome={myRole === "responsavel" ? (userName ?? "Você") : otherUser.nome}
+                cuidadorNome={myRole === "cuidador" ? (userName ?? "Você") : otherUser.nome}
+                onUpdated={fetchProposal}
+              />
+            )}
 
             <div ref={bottomRef} />
           </div>
@@ -681,6 +733,17 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
           </Card>
         )}
       </div>
+
+      <SendProposalDialog
+        open={proposalDialogOpen}
+        onClose={() => setProposalDialogOpen(false)}
+        conversationId={conversationId}
+        responsavelId={responsavelId}
+        cuidadorId={cuidadorId}
+        cuidadorNome={otherUser.nome}
+        prefill={contract}
+        onSent={fetchProposal}
+      />
     </div>
   );
 };

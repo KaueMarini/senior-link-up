@@ -317,9 +317,9 @@ const GerenciarDependentes = () => {
     }
 
     // Resolve cuidador names
-    const profileIds: string[] = [
-      ...new Set(vinculosData.map((v: Vinculo) => v.cuidador_profile_id)),
-    ];
+    const profileIds: string[] = Array.from(
+      new Set(vinculosData.map((v: Vinculo) => v.cuidador_profile_id as string))
+    );
     const { data: profiles } = await supabase
       .from("profiles")
       .select("id, nome")
