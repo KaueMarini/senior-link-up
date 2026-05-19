@@ -590,6 +590,17 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
                 </div>
               );
             })}
+            {proposal && (
+              <ProposalCard
+                proposal={proposal}
+                myRole={myRole}
+                responsavelPhone={myRole === "responsavel" ? myPhone : otherUser.telefone ?? null}
+                cuidadorPhone={myRole === "cuidador" ? myPhone : otherUser.telefone ?? null}
+                responsavelNome={myRole === "responsavel" ? (userName ?? "Você") : otherUser.nome}
+                cuidadorNome={myRole === "cuidador" ? (userName ?? "Você") : otherUser.nome}
+                onUpdated={fetchProposal}
+              />
+            )}
 
             <div ref={bottomRef} />
           </div>
