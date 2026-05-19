@@ -138,23 +138,16 @@ async function analyzeWithGemini(
   currentUserId: string,
   userRole: "cuidador" | "responsavel",
 ): Promise<GeminiAnalysis> {
-  if (!genAI) {
-    return fallbackAnalysis(messages, currentUserId, userRole);
-  }
-
   try {
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: analysisSchema,
-        temperature: 0.3,
-      },
+    const { data, error } = await supabase.functions.invoke("chat-ai-analyze", {
+      body: { messages, currentUserId, userRole },
     });
 
-    const result = await model.generateContent(buildPrompt(messages, currentUserId, userRole));
-    const parsed = JSON.parse(result.response.text()) as GeminiAnalysis;
+    if (error) throw error;
+    if (!data || (data as any).error) throw new Error((data as any)?.error ?? "Erro na IA");
 
+    const parsed = data as GeminiAnalysis;
+    parsed.contractDraft = parsed.contractDraft ?? { tarefas: [], regras: [] };
     parsed.contractDraft.tarefas = parsed.contractDraft.tarefas ?? [];
     parsed.contractDraft.regras = parsed.contractDraft.regras ?? [];
     parsed.smartReplies = parsed.smartReplies ?? [];
@@ -164,10 +157,9 @@ async function analyzeWithGemini(
     parsed.consultationReadiness = Math.max(0, Math.min(100, parsed.consultationReadiness ?? 0));
     parsed.recommendedNextStep = parsed.recommendedNextStep ?? "";
     parsed.matchmakingSummary = parsed.matchmakingSummary ?? "";
-
     return parsed;
   } catch (error) {
-    console.error("[useChatAI] Gemini error, using fallback:", error);
+    console.error("[useChatAI] Lovable AI error, using fallback:", error);
     return fallbackAnalysis(messages, currentUserId, userRole);
   }
 }
