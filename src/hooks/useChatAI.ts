@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { GoogleGenerativeAI, SchemaType, type Schema } from "@google/generative-ai";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface Message {
   id: string;
@@ -30,67 +30,7 @@ interface GeminiAnalysis {
   sentiment: "positivo" | "neutro" | "tenso";
 }
 
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
-
-const analysisSchema: Schema = {
-  type: SchemaType.OBJECT,
-  properties: {
-    contractDraft: {
-      type: SchemaType.OBJECT,
-      properties: {
-        valorAcordado: { type: SchemaType.STRING, nullable: true },
-        horarios: { type: SchemaType.STRING, nullable: true },
-        periodo: { type: SchemaType.STRING, nullable: true },
-        tarefas: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-        regras: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-      },
-      required: ["tarefas", "regras"],
-    },
-    smartReplies: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-    discussedTopics: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-    missingTopics: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-    compatibilitySignals: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-    consultationReadiness: { type: SchemaType.NUMBER },
-    recommendedNextStep: { type: SchemaType.STRING },
-    matchmakingSummary: { type: SchemaType.STRING },
-    conversationStage: {
-      type: SchemaType.STRING,
-      format: "enum",
-      enum: ["inicio", "negociacao", "acordo", "finalizado"],
-    },
-    sentiment: {
-      type: SchemaType.STRING,
-      format: "enum",
-      enum: ["positivo", "neutro", "tenso"],
-    },
-  },
-  required: [
-    "contractDraft",
-    "smartReplies",
-    "discussedTopics",
-    "missingTopics",
-    "compatibilitySignals",
-    "consultationReadiness",
-    "recommendedNextStep",
-    "matchmakingSummary",
-    "conversationStage",
-    "sentiment",
-  ],
-};
-
-function buildPrompt(messages: Message[], currentUserId: string, userRole: "cuidador" | "responsavel"): string {
-  const roleLabel = userRole === "responsavel" ? "Responsavel pelo idoso" : "Cuidador profissional";
-  const otherRole = userRole === "responsavel" ? "Cuidador profissional" : "Responsavel pelo idoso";
-
-  const conversation = messages
-    .map((message) => {
-      const speaker = message.sender_id === currentUserId ? roleLabel : otherRole;
-      return `${speaker}: ${message.content}`;
-    })
-    .join("\n");
-
-  return `
+const apiKey = undefined;
 Voce e um assistente especializado em analise de conversas entre responsaveis por idosos e cuidadores profissionais na plataforma Fly Care.
 
 PAPEL DO USUARIO ATUAL: ${roleLabel}
