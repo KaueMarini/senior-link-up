@@ -305,6 +305,8 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
 
   useEffect(() => {
     fetchMessages();
+    fetchProposal();
+    fetchMyPhone();
 
     const channel = supabase
       .channel(`mediated-chat-${conversationId}`)
@@ -319,10 +321,40 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
           }
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "proposals", filter: `conversation_id=eq.${conversationId}` },
+        (payload) => {
+          if (payload.eventType === "DELETE") setProposal(null);
+          else setProposal(payload.new as ProposalRecord);
+        },
+      )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
+     
   }, [conversationId]);
+
+  const fetchProposal = async () => {
+    const { data } = await (supabase as any)
+      .from("proposals")
+      .select("*")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (data) setProposal(data as ProposalRecord);
+  };
+
+  const fetchMyPhone = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("telefone")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    setMyPhone(data?.telefone ?? null);
+  };
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
