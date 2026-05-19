@@ -62,9 +62,10 @@ const ChatList = ({ onSelectConversation }: ChatListProps) => {
 
         const { data: lastMessageRows } = await (supabase as any)
           .from("mediated_chat_messages")
-          .select("content")
+          .select("content, message_kind")
           .eq("conversation_id", conv.id)
           .in("visible_to_role", [myRole, "both"])
+          .not("message_kind", "in", "(summary,contract)")
           .order("created_at", { ascending: false })
           .limit(1);
 
