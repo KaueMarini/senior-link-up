@@ -606,26 +606,46 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
         </ScrollArea>
 
         {/* Input — disabled once contract is generated */}
-        <div className="border-t p-3 flex gap-2 shrink-0">
-          {contract ? (
-            <p className="flex-1 text-center text-sm text-muted-foreground py-2">
-              Acordo finalizado. Baixe o contrato acima.
-            </p>
-          ) : (
-            <>
-              <Input
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Conte para a IA o que você precisa, espera ou pode oferecer..."
-                className="flex-1"
-                disabled={sending}
-                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) handleSend(); }}
-              />
-              <Button onClick={handleSend} disabled={!newMessage.trim() || sending} size="icon">
-                <Send className="h-4 w-4" />
-              </Button>
-            </>
+        <div className="border-t shrink-0">
+          {!contract && insight.smartReplies.length > 0 && !sending && (
+            <div className="flex flex-wrap gap-1.5 px-3 pt-2">
+              <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-primary/70">
+                <Sparkles className="h-3 w-3" /> Sugestões
+              </span>
+              {insight.smartReplies.map((s, i) => (
+                <button
+                  key={`${i}-${s}`}
+                  type="button"
+                  disabled={sending}
+                  onClick={() => setNewMessage(s)}
+                  className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs text-primary transition-colors hover:bg-primary/10 hover:border-primary/40 disabled:opacity-50"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
           )}
+          <div className="p-3 flex gap-2">
+            {contract ? (
+              <p className="flex-1 text-center text-sm text-muted-foreground py-2">
+                Acordo finalizado. Baixe o contrato acima.
+              </p>
+            ) : (
+              <>
+                <Input
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Conte para a IA o que você precisa, espera ou pode oferecer..."
+                  className="flex-1"
+                  disabled={sending}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) handleSend(); }}
+                />
+                <Button onClick={handleSend} disabled={!newMessage.trim() || sending} size="icon">
+                  <Send className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </Card>
 
