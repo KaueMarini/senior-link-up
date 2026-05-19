@@ -4,7 +4,6 @@ import { ptBR } from "date-fns/locale";
 import {
   ArrowLeft,
   Send,
-  Send,
   Sparkles,
   PartyPopper,
   Download,
