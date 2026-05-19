@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.chat-ai-analyze]
 verify_jwt = false
+
+[functions.mediate-chat]
+verify_jwt = false
