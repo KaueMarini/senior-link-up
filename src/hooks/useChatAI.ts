@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { GoogleGenerativeAI, SchemaType, type Schema } from "@google/generative-ai";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface Message {
   id: string;
@@ -30,87 +30,7 @@ interface GeminiAnalysis {
   sentiment: "positivo" | "neutro" | "tenso";
 }
 
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
-
-const analysisSchema: Schema = {
-  type: SchemaType.OBJECT,
-  properties: {
-    contractDraft: {
-      type: SchemaType.OBJECT,
-      properties: {
-        valorAcordado: { type: SchemaType.STRING, nullable: true },
-        horarios: { type: SchemaType.STRING, nullable: true },
-        periodo: { type: SchemaType.STRING, nullable: true },
-        tarefas: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-        regras: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-      },
-      required: ["tarefas", "regras"],
-    },
-    smartReplies: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-    discussedTopics: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-    missingTopics: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-    compatibilitySignals: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-    consultationReadiness: { type: SchemaType.NUMBER },
-    recommendedNextStep: { type: SchemaType.STRING },
-    matchmakingSummary: { type: SchemaType.STRING },
-    conversationStage: {
-      type: SchemaType.STRING,
-      format: "enum",
-      enum: ["inicio", "negociacao", "acordo", "finalizado"],
-    },
-    sentiment: {
-      type: SchemaType.STRING,
-      format: "enum",
-      enum: ["positivo", "neutro", "tenso"],
-    },
-  },
-  required: [
-    "contractDraft",
-    "smartReplies",
-    "discussedTopics",
-    "missingTopics",
-    "compatibilitySignals",
-    "consultationReadiness",
-    "recommendedNextStep",
-    "matchmakingSummary",
-    "conversationStage",
-    "sentiment",
-  ],
-};
-
-function buildPrompt(messages: Message[], currentUserId: string, userRole: "cuidador" | "responsavel"): string {
-  const roleLabel = userRole === "responsavel" ? "Responsavel pelo idoso" : "Cuidador profissional";
-  const otherRole = userRole === "responsavel" ? "Cuidador profissional" : "Responsavel pelo idoso";
-
-  const conversation = messages
-    .map((message) => {
-      const speaker = message.sender_id === currentUserId ? roleLabel : otherRole;
-      return `${speaker}: ${message.content}`;
-    })
-    .join("\n");
-
-  return `
-Voce e um assistente especializado em analise de conversas entre responsaveis por idosos e cuidadores profissionais na plataforma Fly Care.
-
-PAPEL DO USUARIO ATUAL: ${roleLabel}
-
-CONVERSA:
-${conversation || "(conversa ainda nao iniciada)"}
-
-INSTRUCOES:
-1. contractDraft: extraia valor, horarios, periodo, tarefas e regras mencionadas. Se faltarem dados, use null ou lista vazia.
-2. smartReplies: gere exatamente 3 sugestoes curtas, naturais e uteis para a proxima mensagem do usuario atual.
-3. discussedTopics: liste os topicos ja abordados.
-4. missingTopics: liste o que ainda falta alinhar para aumentar a chance de fechamento.
-5. compatibilitySignals: liste sinais concretos de compatibilidade entre as partes.
-6. consultationReadiness: de uma nota de 0 a 100 para o quanto a conversa ja esta pronta para marcar uma consulta inicial.
-7. recommendedNextStep: diga em uma frase curta qual deve ser o proximo passo ideal.
-8. matchmakingSummary: resuma em ate 140 caracteres o estado atual do match.
-9. conversationStage: classifique como inicio, negociacao, acordo ou finalizado.
-10. sentiment: classifique como positivo, neutro ou tenso.
-`.trim();
-}
+const apiKey = undefined;
 
 function fallbackAnalysis(
   messages: Message[],
@@ -218,23 +138,16 @@ async function analyzeWithGemini(
   currentUserId: string,
   userRole: "cuidador" | "responsavel",
 ): Promise<GeminiAnalysis> {
-  if (!genAI) {
-    return fallbackAnalysis(messages, currentUserId, userRole);
-  }
-
   try {
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: analysisSchema,
-        temperature: 0.3,
-      },
+    const { data, error } = await supabase.functions.invoke("chat-ai-analyze", {
+      body: { messages, currentUserId, userRole },
     });
 
-    const result = await model.generateContent(buildPrompt(messages, currentUserId, userRole));
-    const parsed = JSON.parse(result.response.text()) as GeminiAnalysis;
+    if (error) throw error;
+    if (!data || (data as any).error) throw new Error((data as any)?.error ?? "Erro na IA");
 
+    const parsed = data as GeminiAnalysis;
+    parsed.contractDraft = parsed.contractDraft ?? { tarefas: [], regras: [] };
     parsed.contractDraft.tarefas = parsed.contractDraft.tarefas ?? [];
     parsed.contractDraft.regras = parsed.contractDraft.regras ?? [];
     parsed.smartReplies = parsed.smartReplies ?? [];
@@ -244,10 +157,9 @@ async function analyzeWithGemini(
     parsed.consultationReadiness = Math.max(0, Math.min(100, parsed.consultationReadiness ?? 0));
     parsed.recommendedNextStep = parsed.recommendedNextStep ?? "";
     parsed.matchmakingSummary = parsed.matchmakingSummary ?? "";
-
     return parsed;
   } catch (error) {
-    console.error("[useChatAI] Gemini error, using fallback:", error);
+    console.error("[useChatAI] Lovable AI error, using fallback:", error);
     return fallbackAnalysis(messages, currentUserId, userRole);
   }
 }
