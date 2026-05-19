@@ -67,6 +67,19 @@ const createEmptyInsight = (): ConversationInsight => ({
   smartReplies: [],
 });
 
+const normalizeInsight = (raw: any): ConversationInsight => {
+  const base = createEmptyInsight();
+  if (!raw || typeof raw !== "object") return base;
+  return {
+    matchSummary: typeof raw.matchSummary === "string" ? raw.matchSummary : base.matchSummary,
+    nextStep: typeof raw.nextStep === "string" ? raw.nextStep : base.nextStep,
+    readinessScore: typeof raw.readinessScore === "number" ? raw.readinessScore : 0,
+    missingTopics: Array.isArray(raw.missingTopics) ? raw.missingTopics : [],
+    compatibilitySignals: Array.isArray(raw.compatibilitySignals) ? raw.compatibilitySignals : [],
+    smartReplies: Array.isArray(raw.smartReplies) ? raw.smartReplies : [],
+  };
+};
+
 // ─────────────────────────────────────────────
 // Contract PDF helper
 // ─────────────────────────────────────────────
