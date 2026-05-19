@@ -478,11 +478,8 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
     setSending(false);
   };
 
-  const handleWhatsApp = () => {
-    const phone = otherUser.telefone?.replace(/\D/g, "");
-    if (!phone) return;
-    window.open(`https://wa.me/55${phone}?text=Ola ${otherUser.nome}, estou entrando em contato pelo FlyCare!`, "_blank");
-  };
+
+
 
   // ─────────────────────────────────────────────
   // Render
