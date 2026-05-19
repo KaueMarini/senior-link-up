@@ -269,7 +269,13 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending]       = useState(false);
   const [insight, setInsight]       = useState<ConversationInsight>(createEmptyInsight());
+  const [proposal, setProposal]     = useState<ProposalRecord | null>(null);
+  const [myPhone, setMyPhone]       = useState<string | null>(null);
+  const [proposalDialogOpen, setProposalDialogOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const responsavelId = myRole === "responsavel" ? user?.id ?? "" : otherUser.id;
+  const cuidadorId    = myRole === "cuidador"    ? user?.id ?? "" : otherUser.id;
 
   // Messages visible to this user (my role or "both"), excluding internal summaries
   const visibleMessages = useMemo(
