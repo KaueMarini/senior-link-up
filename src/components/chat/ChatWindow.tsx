@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   ArrowLeft,
-  ExternalLink,
+  Send,
   Send,
   Sparkles,
   PartyPopper,
