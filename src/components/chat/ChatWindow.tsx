@@ -525,10 +525,14 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
             </div>
           </div>
 
-          {otherUser.telefone && (
-            <Button variant="outline" size="sm" onClick={handleWhatsApp} className="gap-2 shrink-0">
-              <ExternalLink className="h-4 w-4" />
-              <span className="hidden sm:inline">WhatsApp</span>
+          {myRole === "responsavel" && (!proposal || proposal.status === "recusada") && (
+            <Button
+              size="sm"
+              onClick={() => setProposalDialogOpen(true)}
+              className="gap-2 shrink-0"
+            >
+              <FileSignature className="h-4 w-4" />
+              <span className="hidden sm:inline">Enviar proposta</span>
             </Button>
           )}
         </div>
