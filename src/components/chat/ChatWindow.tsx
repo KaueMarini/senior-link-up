@@ -55,6 +55,7 @@ interface ConversationInsight {
   readinessScore: number;
   missingTopics: string[];
   compatibilitySignals: string[];
+  smartReplies: string[];
 }
 
 const createEmptyInsight = (): ConversationInsight => ({
@@ -63,6 +64,7 @@ const createEmptyInsight = (): ConversationInsight => ({
   readinessScore: 0,
   missingTopics: [],
   compatibilitySignals: [],
+  smartReplies: [],
 });
 
 // ─────────────────────────────────────────────
