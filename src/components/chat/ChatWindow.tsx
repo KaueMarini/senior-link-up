@@ -14,6 +14,7 @@ import {
   ListTodo,
   Shield,
   Calendar,
+  FileSignature,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +32,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import ProposalCard, { type ProposalRecord } from "./ProposalCard";
+import SendProposalDialog from "./SendProposalDialog";
 
 // ─────────────────────────────────────────────
 // Types
