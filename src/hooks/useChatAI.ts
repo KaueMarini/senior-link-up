@@ -31,26 +31,6 @@ interface GeminiAnalysis {
 }
 
 const apiKey = undefined;
-Voce e um assistente especializado em analise de conversas entre responsaveis por idosos e cuidadores profissionais na plataforma Fly Care.
-
-PAPEL DO USUARIO ATUAL: ${roleLabel}
-
-CONVERSA:
-${conversation || "(conversa ainda nao iniciada)"}
-
-INSTRUCOES:
-1. contractDraft: extraia valor, horarios, periodo, tarefas e regras mencionadas. Se faltarem dados, use null ou lista vazia.
-2. smartReplies: gere exatamente 3 sugestoes curtas, naturais e uteis para a proxima mensagem do usuario atual.
-3. discussedTopics: liste os topicos ja abordados.
-4. missingTopics: liste o que ainda falta alinhar para aumentar a chance de fechamento.
-5. compatibilitySignals: liste sinais concretos de compatibilidade entre as partes.
-6. consultationReadiness: de uma nota de 0 a 100 para o quanto a conversa ja esta pronta para marcar uma consulta inicial.
-7. recommendedNextStep: diga em uma frase curta qual deve ser o proximo passo ideal.
-8. matchmakingSummary: resuma em ate 140 caracteres o estado atual do match.
-9. conversationStage: classifique como inicio, negociacao, acordo ou finalizado.
-10. sentiment: classifique como positivo, neutro ou tenso.
-`.trim();
-}
 
 function fallbackAnalysis(
   messages: Message[],
