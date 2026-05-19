@@ -469,6 +469,7 @@ const ChatWindow = ({ conversationId, otherUser, onBack }: ChatWindowProps) => {
       readinessScore:       aiResult.readinessScore,
       missingTopics:        aiResult.missingTopics,
       compatibilitySignals: aiResult.compatibilitySignals,
+      smartReplies:         aiResult.smartReplies,
     });
 
     await supabase
